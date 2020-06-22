@@ -65,7 +65,7 @@ version = "2.04"
 #
 # Size of the available User Space in Mega Byte (MB) 
 #
-USER_SPACE_SIZE_MB =550 # 550MB 
+USER_SPACE_SIZE_MB =500 # 550MB 
 #
 ###################################################################################################
 #
@@ -537,6 +537,7 @@ if __name__ == '__main__':
         f.write("**********************************************************************************************************\n")   
         f.write("\n")
         f.write("-- Git Repository: https://github.com/robseb/rsyocto\n")
+        f.write("-- Contact: git@robseb.de")
         f.write("-- VERSION: "+str(nb)+"\n")
         f.write("-- FPGA: "+FPGAName[BoardGenCounter]+"\n")
         f.write("-- SUPPORTED BOARD: "+BoardName[BoardGenCounter]+"\n")
