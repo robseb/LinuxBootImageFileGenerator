@@ -23,7 +23,7 @@ ___
 
 # Features
 
-***Boot image *(.img)* file generation for distributing embedded Linux Distributions**
+* **Boot image *(.img)* file generation for distributing embedded Linux Distributions**
 * **Up to 4 freely configurable partitions**
 * **Configurable partition size in *Byte*,*Kilobyte*,*Megabyte* or *Gigabyte***
 * **File structure for each partition will be generated and user files can be added**
@@ -298,7 +298,7 @@ Otherwise, I‘m looking for an interesting full time job offer to share and dee
 [![Gitter](https://badges.gitter.im/rsyocto/community.svg)](https://gitter.im/rsyocto/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Email me!](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](mailto:git@robseb.de)
 
-[![GitHub stars](https://img.shields.io/github/stars/robseb/NIOSII_EclipseCompProject?style=social)](https://GitHub.com/robseb/NIOSII_EclipseCompProject/stargazers/)
-[![GitHub watchers](https://img.shields.io/github/watchers/robseb/NIOSII_EclipseCompProject?style=social)](https://github.com/robseb/NIOSII_EclipseCompProject/watchers)
+[![GitHub stars](https://img.shields.io/github/stars/robseb/LinuxBootImageGenerator?style=social)](https://GitHub.com/robseb/LinuxBootImageGenerator/stargazers/)
+[![GitHub watchers](https://img.shields.io/github/watchers/robseb/LinuxBootImageGenerator?style=social)](https://github.com/robseb/LinuxBootImageGenerator/watchers)
 [![GitHub followers](https://img.shields.io/github/followers/robseb?style=social)](https://github.com/robseb)
 
