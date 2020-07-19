@@ -22,7 +22,8 @@ It is designed to run on modern Linux distributions.
 ___
 
 # Features
-* **Boot image *(.img)* file generation for distributing embedded Linux Distributions**
+
+***Boot image *(.img)* file generation for distributing embedded Linux Distributions**
 * **Up to 4 freely configurable partitions**
 * **Configurable partition size in *Byte*,*Kilobyte*,*Megabyte* or *Gigabyte***
 * **File structure for each partition will be generated and user files can be added**
@@ -288,8 +289,8 @@ The following steps describes in the right sequence the required Python methods 
 
 *LinuxBootImageGenerator* and *rsyocto* are projects, that I have fully developed on my own. No companies are involved in this projects.
 I’m recently graduated as a master in electrical engineering with the major embedded systems (M. Sc.).
-I'm open for cooperations as a freelancer to realize your specific requirements.
 
+I'm open for cooperations as a freelancer to realize your specific requirements.
 Otherwise, I‘m looking for an interesting full time job offer to share and deepen my shown skills.
 
 **Github sponsoring is welcome.**
