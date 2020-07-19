@@ -9,13 +9,13 @@
 
 <br>
 
-**This Python script can generate an bootable image file with Kernel-,bootloader- and user-files . Tools like "*rufus*" can write for instance a SD-card to enable the booting of a Linux Distribution**
+**This Python script can generate an bootable image file with Kernel-,bootloader- and user-files . Tools like ["*rufus*"](https://github.com/pbatard/rufus) can write for instance a SD-card to enable the booting of a Linux Distribution**
 
 The script can be used inside an other python application or it can be executed as a console task. In the console mode is a simple XML-file used to describe the partition table of a final image file.
 Then  the script generates folders depending on the image configuration. In the next step it is enabled for the user to copy files and folders to the partitions. These files will be added to the final image file. 
 The script can automatically compile Linux device tree (*.dts*)-files, unzip archive files, like "*tar.gz*" or "*zip*", and can calculate the required partition size for the entire content.
 
-Actually, I designed this script to expand the capabilities of my custom build system for my embedded Linux *rsyocto* for *Intel* *SoC-FPGAs*.
+Actually, I designed this script to expand the capabilities of my custom build system for my embedded Linux  [*rsyocto*](https://github.com/robseb/rsyocto) for *Intel* *SoC-FPGAs*.
 However, I noticed that the flexibility of my script allows the usage for almost all embedded Linux platform for instants the *Raspberry Pi* or *NVIDIA Jatson*.
 
 It is designed to run on modern Linux distributions. 
@@ -142,6 +142,7 @@ For generating a bootable image by executing a single Linux command please follo
 3. **Generation of the bootable image file with custom configuration**
     
     The script will generate a image file with name "*LinuxDistro.img*". Additionally, it is possible to generate a "*.zip*" archive file with the name "LinuxDistro.zip". Tools, like "*rufus*" can process this "*.zip*" file directly and can bring it onto a SD-Card. 
+    <br>
 
 # Getting started as Python library 
 
@@ -279,7 +280,6 @@ The following steps describes in the right sequence the required Python methods 
     ````
 
 
-
     
     
 
@@ -287,13 +287,14 @@ The following steps describes in the right sequence the required Python methods 
 
 **Robin Sebastian**
 
-*LinuxBootImageGenerator* and *rsyocto* are projects, that I have fully developed on my own. No companies are involved in this projects.
-I’m recently graduated as a master in electrical engineering with the major embedded systems (M. Sc.).
+*LinuxBootImageGenerator* and [*rsyocto*](https://github.com/robseb/rsyocto) are projects, that I have fully developed on my own.
+No companies are involved in this projects.
+I’m recently graduated as a master in electrical engineering with the major embedded systems (*M. Sc.*).
 
 I'm open for cooperations as a freelancer to realize your specific requirements.
 Otherwise, I‘m looking for an interesting full time job offer to share and deepen my shown skills.
 
-**Github sponsoring is welcome.**
+**[Github sponsoring is welcome.](https://github.com/sponsors/robseb)**
 
 [![Gitter](https://badges.gitter.im/rsyocto/community.svg)](https://gitter.im/rsyocto/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Email me!](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](mailto:git@robseb.de)
