@@ -274,7 +274,7 @@ class Partition:
                 if self.type_hex ==0 and len(folderDirectories) >0:
                     raise Exception('For RAW partitions are no folders allowed')
 
-                # Allways scan the top folder for files 
+                # always scan the top folder for files 
                 for file in os.listdir(searchPath):
                     if os.path.isfile(searchPath+'/'+file):
                         self.__print(diagnosticOutput,'    File: '+searchPath+'/'+file)
