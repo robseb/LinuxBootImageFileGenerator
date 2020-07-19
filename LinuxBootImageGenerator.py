@@ -61,17 +61,17 @@ class Partition:
     size : int              # Partition size in Byte (0 => dynamic file size)
     offset_str: str         # Partition offset space  as string to a dynamic size 
     offset: int             # Partition offset space as byte to a dynamic size 
-    fileDirectories =[]     # File directory of every to imported file to partition
-    totalFileSize: int      # Total file size of the Partition (Byte)
-    totalFileSizeStr: str   # Total file size of the Partition (string 1GB,1MB)
+    fileDirectories =[]     # File directory of each file to be imported to the partition
+    totalFileSize: int      # Total file size of the partition (Byte)
+    totalFileSizeStr: str   # Total file size of the partition (string 1GB,1MB)
 
-    totalSize:  str         # Total size of the Partition (Byte)
-    totalSizeStr:  str      # Total size of the Partition (string 1GB, 1MB)
+    totalSize:  str         # Total size of the partition (Byte)
+    totalSizeStr:  str      # Total size of the partition (string 1GB, 1MB)
     
-    comp_devicetree: bool   # Comapile a Linux dts devicetree file if available
-    unzip_file: bool        # unzip a comppressed file if available 
+    comp_devicetree: bool   # Compile a Linux dts devicetree file if available
+    unzip_file: bool        # unzip a compressed file if available 
     startSector: int        # Partition Start sector 
-    BlockSectorSize: int    # Block size of the Partion
+    BlockSectorSize: int    # Block size of the partition
 
     __filesImported:bool    # Indicates that files are imported to the list 
 
@@ -85,15 +85,15 @@ class Partition:
     # @param size_str          Size of the partition as string 
     #                          Format: <no>: Byte, <no>K: Kilobyte, <no>M: Megabyte or <no>G: Gigabyte
     #                                  "*" dynamic file size => Size of the files2copy + offset
-    # @param offset_str        In case a dynamic size is used is the offset value is added to file size
-    # @param devicetree        Complie the Linux Device (.dts) inside the partison if available 
+    # @param offset_str        In case a dynamic size is used the offset value is added to file size
+    # @param devicetree        Compile the Linux Device (.dts) inside the partition if available 
     # @param unzip             Unzip a compressed file if available
     # @param operation_mode    File scan mode: 1= List every file | 0= List only top files and folders
     #  
     def __init__(self,diagnosticOutput=True, id=None, type=None,size_str=None,
                  offset_str=None,devicetree=False,unzip=False, operation_mode=0):
         
-        # Convert the Partition number to int 
+        # Convert the partition number to int 
         try:
             self.id = int(id)
         except ValueError:
@@ -105,7 +105,7 @@ class Partition:
         # Convert type to lowercase
         self.type = type.lower()
 
-        # Convert the format to a "fdisk" HEX codes  and to "mkfs" for "mkfs.xxx"
+        # Convert the format to "fdisk" HEX codes and to "mkfs" for "mkfs.xxx"
         # ext2, ext3,ext4,xfs ... -> LINUX
         if re.match('^ext[2-4]|xfs|Linux$', self.type):
             self.type_hex  = '83'                # Linux 
@@ -155,7 +155,7 @@ class Partition:
     #
     #
     # @brief Import files to the file list
-    #        This files will then be added to the partition 
+    #        These files will then be added to the partition 
     # @param diagnosticOutput       Enable/Disable the console printout
     # @param fileDirectories       List of File directories to import 
     #
@@ -164,33 +164,33 @@ class Partition:
                      'for the partition No.'+str(self.id))
         if fileDirectories == None:
             raise Exception('The file list to import must be specified')
-        # Check that all phases are vailed
+        # Check that all phases are valid
         for file in fileDirectories:
             if os.path.isdir(file):
                 # In RAW partitions folders are not allowed 
                 if self.type_hex ==0:
-                    raise Exception('For RAW partisons are no folders allowed')
+                    raise Exception('For RAW partitions are no folders allowed')
             elif not os.path.isfile(file):
                     raise Exception(' File/Folder "'+str(file)+'" does not exist!')
 
-            # Complie the Linux Device Tree if necessary 
+            # Compile the Linux Device Tree if necessary 
             dtsFileDir = None 
             if self.comp_devicetree == True:
                 dtsFileDir = self.__compileDeviceTree(diagnosticOutput,file)
 
-            # Uncpmpress archive files if necessary
+            # Uncompress archive files if necessary
             uncompressedFilesDir =[]
             if self.unzip_file == True:
                 uncompressedFilesDir = self.__uncompressArchivefiles(diagnosticOutput,file)
 
-        # Remove the uncompiled Linux device tree file from the list
+        # Remove the to uncompiled Linux device tree file from the list
         if not dtsFileDir == None:
             self.__print(diagnosticOutput,'   Exclute the file "'+dtsFileDir+'" from the list')
             if not dtsFileDir in self.fileDirectories:
-                    raise Exception('Failed to find the uncompliled device tree file '+dtsFileDir)
+                    raise Exception('Failed to find the uncompiled device tree file '+dtsFileDir)
             self.fileDirectories.remove(dtsFileDir)
         
-        # Remove all uncompressed archive file form the list
+        # Remove all uncompressed archive file from the list
         if not uncompressedFilesDir == None:
             for arch in uncompressedFilesDir:
                 self.__print(diagnosticOutput,'   Exclute the archive file "'+arch+'" from the list')
@@ -203,10 +203,10 @@ class Partition:
     #
     #
     #
-    # @brief Find files in a direcotroy and add them to the file list
-    #        This files will then be added to the partition 
+    # @brief Find files in a directory and add them to the file list
+    #        These files will then be added to the partition 
     # @param diagnosticOutput       Enable/Disable the console printout
-    # @param searchPath             Direcotry to search
+    # @param searchPath             Directory to search
     #
     def findFileDirectories(self,diagnosticOutput=True,searchPath = None):
         self.__print(diagnosticOutput,'--> Scan path "'+str(searchPath)+'" to find a files inside it')
@@ -216,12 +216,12 @@ class Partition:
             self.__print(diagnosticOutput,'    Has no content')
             return
 
-        # Complie the Linux Device Tree if necessary 
+        # Compile the Linux Device Tree if necessary 
         dtsFileDir = None 
         if self.comp_devicetree == True:
             dtsFileDir = self.__compileDeviceTree(diagnosticOutput,searchPath)
 
-        # Uncpmpress archive files if necessary
+        # Uncompress archive files if necessary
         uncompressedFilesDir =[]
         if self.unzip_file == True:
             uncompressedFilesDir = self.__uncompressArchivefiles(diagnosticOutput,searchPath)
@@ -234,9 +234,9 @@ class Partition:
                 # Scan the top folder 
                 for folder in os.listdir(searchPath):
                     if os.path.isdir(searchPath+'/'+folder):
-                        # In RAW partitions folders are not allowed 
+                        # In RAW partition folders are not allowed 
                         if self.type_hex ==0:
-                            raise Exception('For RAW partisons are no folders allowed')
+                            raise Exception('For RAW partitions are no folders allowed')
 
                         fileDirectories.append(searchPath+'/'+folder)
                     elif os.path.isfile(searchPath+'/'+folder):
@@ -246,21 +246,21 @@ class Partition:
         
         # Scan operating mode: Scan Mode 1 -> Scan each file in every folder  
         #                                      Find every file in the top folder and in sub-folders 
-        #                                      and add it to the list
+        #                                      and add them to the list
         else:
         # List every file 
-            # List the pathes off all folders inside the folder
+            # List the pathes of all folders inside the folder
             folderDirectories =[]
             scanedFolders =[]
             scanpath =searchPath
             try:
-                # Scan the folder for new folder 
+                # Scan the folder for new directories 
                 while True:
                     for folder in os.listdir(scanpath):
                         if os.path.isdir(scanpath+'/'+folder):
                             folderDirectories.append(scanpath+'/'+folder)
                             self.__print(diagnosticOutput,'    Folder: '+scanpath+'/'+folder)
-                    # Mark the folder as scaned 
+                    # Mark the folder as scanned 
                     scanedFolders.append(scanpath)
                     # Find a folder that is not processed jet
                     scanpath = None
@@ -268,11 +268,11 @@ class Partition:
                         if not proc in scanedFolders:
                             scanpath = proc
                     if scanpath == None:
-                        # all direcories are processed 
+                        # all directories are processed 
                         break
-                # For RAW partions are only files allowed
+                # For RAW partitions are only files allowed
                 if self.type_hex ==0 and len(folderDirectories) >0:
-                    raise Exception('For RAW partisons are no folders allowed')
+                    raise Exception('For RAW partitions are no folders allowed')
 
                 # Allways scan the top folder for files 
                 for file in os.listdir(searchPath):
@@ -290,7 +290,7 @@ class Partition:
                 raise Exception('Failed process a file for importing! Msg:'+str(ex))
         # For every mode:
     
-        # Avoid issues by removeing all doubled files from the list
+        # Avoid issues by removing all doubled files from the list
         self.fileDirectories =  list(set(fileDirectories))
 
         # Remove the uncompiled Linux device tree file from the list
@@ -300,7 +300,7 @@ class Partition:
                     raise Exception('Failed to find the uncompliled device tree file '+dtsFileDir)
             self.fileDirectories.remove(dtsFileDir)
         
-        # Remove all uncompressed archive file form the list
+        # Remove all uncompressed archive files form the list
         if not uncompressedFilesDir == None:
             for arch in uncompressedFilesDir:
                 self.__print(diagnosticOutput,'   Exclute the archive file "'+arch+'" from the list')
@@ -324,7 +324,7 @@ class Partition:
     
     # 
     #
-    # @brief Return a folder name for the partitson for user file import
+    # @brief Return a folder name for the partition for user file import
     # @param diagnosticOutput       Enable/Disable the console printout
     # @return                       working folder name
     #   
@@ -335,7 +335,7 @@ class Partition:
         
     # 
     #
-    # @brief Calculate the total file size off all files to import for the partitison 
+    # @brief Calculate the total file size of all files to import to the partition 
     # @param diagnosticOutput       Enable/Disable the console printout
     #
     def calculatePartitionFilesize(self,diagnosticOutput=True):
@@ -383,7 +383,7 @@ class Partition:
             self.totalSize = self.totalFileSize + self.offset
 
         if self.totalSize == 0:
-            raise Exception('The partitsion No.'+str(self.id)+' has no size!')
+            raise Exception('The partition No.'+str(self.id)+' has no size!')
 
         # Convert byte size to string (1MB, 1GB,...)
         self.totalFileSizeStr = self.__convert_byte2str(self.totalFileSize)
@@ -431,16 +431,16 @@ class Partition:
             return 0
 
         inp = re.match("^[0-9]+[KMG]?$", size_value, re.I)
-        # Is the input valied? 
+        # Is the input valid? 
         if inp == None:
             raise Exception(str(size_value)+' is not in the right format!') 
         else:
             # Decode the unit (KB,MB,GB) and the value 
             size_unit  = re.search("[KMG]+$", inp.group(0), re.I)
             size_value = re.search("^[0-9]+", inp.group(0), re.I)
-            # Munlitply with depending factor of the unit
+            # Multiply with the depending factor of the unit
             if size_unit :
-                # Read the upper charector 
+                # Read the upper character 
                 unit = size_unit.group(0).upper()
                 if unit == 'K':
                     factor = 1024
@@ -463,13 +463,13 @@ class Partition:
     #
     # @brief Compile a Linux Device Tree file (dts) if available 
     # @param diagnosticOutput       Enable/Disable the console printout
-    # @param searchPath             Direcotry to search
+    # @param searchPath             Directory to search
     # @return                       File path of the compiled device tree file
     #  
     def __compileDeviceTree(self,diagnosticOutput=True,searchPath =None):
         
         singleFile = len(os.listdir(searchPath)) == 0
-        self.__print(diagnosticOutput,'--> Complie a Linux Device Tree (.dts) file')
+        self.__print(diagnosticOutput,'--> Compile a Linux Device Tree (.dts) file')
         if not singleFile:
             self.__print(diagnosticOutput,'    Looking for a .dts in the top folder')
 
@@ -490,17 +490,17 @@ class Partition:
                     suffix_pos = file.find('dts')
                     if suffix_pos >=0:
                         if dts_file_found:
-                            raise Exception('More the one .dts file found!\n'+\
+                            raise Exception('More than one .dts file found!\n'+\
                                             'This feature is not supported')
                         self.__print(diagnosticOutput,'DTS File: '+file)
                         dts_file_name = file
                         dts_file_dir = searchPath+'/'+file
                         dts_file_found = True
 
-        # Check if a dts file was found
+        # Check if a dts file is found
         if dts_file_name == None:
             self.__print(diagnosticOutput,'NOTE: No Linux Devicetree '+\
-                        '.dts file was found in the top folder!')
+                        '.dts file is found in the top folder!')
             return None
 
         outputfile = dts_file_name[:suffix_pos-3]+'.dtb'
@@ -513,9 +513,9 @@ class Partition:
                         try:
                             os.remove(searchPath+'/'+file)
                         except Exception:
-                            raise Exception('Failed to delate the old Linux device Tree file')
+                            raise Exception('Failed to delete the old Linux device Tree file')
 
-        # Complie the dts file 
+        # Compile the dts file 
         try:
             if singleFile:
                 os.system('dtc -O dtb -o '+searchPath+' '+dts_file_name)
@@ -523,12 +523,12 @@ class Partition:
                 os.system('dtc -O dtb -o '+searchPath+'/'+outputfile+' '+searchPath+'/'+dts_file_name)
     
         except subprocess.CalledProcessError:
-            raise Exception('Failed to complie the Linux Devicetree file "'+dts_file_name+'"\n'+ \
+            raise Exception('Failed to compile the Linux Devicetree file "'+dts_file_name+'"\n'+ \
                             'Is the Linux Device compiler "dtc" installed?')
 
         time.sleep(DELAY_MS)
 
-        self.__print(diagnosticOutput,'--> Compilation of the Linux Devie Tree file "'+\
+        self.__print(diagnosticOutput,'--> Compilation of the Linux Device Tree file "'+\
                                     dts_file_name+'" done')
         self.__print(diagnosticOutput,'    Name of outputfile: "'+outputfile+'"')
 
@@ -539,7 +539,7 @@ class Partition:
     #
     # @brief Uncompress archive files if available 
     # @param diagnosticOutput       Enable/Disable the console printout
-    # @param searchPath             Direcotry to search
+    # @param searchPath             Directory to search
     # @return                       File path list of uncompressed archive files 
     # 
     def __uncompressArchivefiles(self,diagnosticOutput=True,searchPath =None):
@@ -603,7 +603,7 @@ class Partition:
                 except subprocess.CalledProcessError:
                     raise Exception('Failed to unzip the file "'+arch+'"\n')
         
-        self.__print(diagnosticOutput,'--> Uncompress off all files is done')
+        self.__print(diagnosticOutput,'--> Uncompressing of all files is done')
 
 
         # Return the uncompiled file directories 
@@ -618,7 +618,7 @@ class Partition:
 # @brief Class of the BootImage Creater 
 #  
 class BootImageCreator:
-    partitionTable=[]           # Partision list decoded from the XML file
+    partitionTable=[]           # Partition list decoded from the XML file
     outputFileName: str         # Name of the output image file with ".img" 
     pathOfOutputImageDir: str   # Directory of the output file 
     totalImageSize : int        # Total image size of all partitions in byte 
@@ -639,27 +639,26 @@ class BootImageCreator:
     # @param pathOfOutputImageDir    File path of the output image file 
     #  
     def __init__(self, partitionTable=None,outputFileName=None,pathOfOutputImageDir=None):
-        # Check that partition number is only available once
+        # Check that the partition number is only available once
         partitionTable_local = []
         id_list_local =[]
 
         for pat in partitionTable:
             if pat.id == 0: 
-                raise Exception('Partition No. 0 is not allowed begin with 1')
+                raise Exception('Partition No. 0 is not allowed; begin with 1')
             if pat.totalSize == None:
                 raise Exception('Run the methode "calculatePartitionFilesize()"'+\
                                 'before the constructor of "BootImageCreator"')
 
         # Something to copy available ?
         temp_total_file=0
-
         for pat in partitionTable:
             temp_total_file =temp_total_file+ pat.totalFileSize
         if temp_total_file ==0:
             raise Exception('No partition has files to copy to it')
 
         if len(partitionTable) > 4:
-            raise Exception('Not more then 4 partitions are allowed')
+            raise Exception('Not more than 4 partitions are allowed')
 
         for pat in partitionTable:
             for pat_loc in partitionTable_local:
@@ -680,13 +679,13 @@ class BootImageCreator:
 
         self.partitionTable = partitionTable_local
 
-        #Check that the path of file location exist
+        #Check that the path of file location exists
         if not os.path.isdir(pathOfOutputImageDir):
             raise Exception('The selected output file path does not exist!')
 
         self.pathOfOutputImageDir= pathOfOutputImageDir
 
-        # Check that name of output file is okay
+        # Check that the name of output file is okay
         if not re.match("^[a-z0-9\._]+$", outputFileName, re.I):
             raise Exception('The name '+str(outputfileName)+' can not be used as Linux file name!')
         
@@ -754,7 +753,7 @@ class BootImageCreator:
 
         # Step 5: Clear and unmount the used loopback device
         #self.__unmountLoopback(diagnosticOutput)
-        self.__delate_loopback(diagnosticOutput,self.__usedLoopback)
+        self.__delete_loopback(diagnosticOutput,self.__usedLoopback)
 
         # Step 6: Copy the files to the partition table
         for parts in self.partitionTable:
@@ -772,15 +771,15 @@ class BootImageCreator:
         if zipfileName == None:
             raise Exception('The zip file must be specified')
         if not os.path.isfile(self.__imageFilepath):
-            raise Exception('The output image file does not exsist')
+            raise Exception('The output image file does not exist')
        
-        # Delate the old zip file
+        # delete the old zip file
         if os.path.isfile(zipfileName):
             self.__print(diagnosticOutput,'   Remove the old zip file ')
             try:
                 os.remove(zipfileName)
             except Exception as ex:
-                raise Exception('Failed delate to old zip file MSG:'+str(ex))
+                raise Exception('Failed delete to old zip file MSG:'+str(ex))
 
         # Compress the image file to ".zip"
         self.__print(diagnosticOutput,'--> Zip the image file with'+\
@@ -788,8 +787,7 @@ class BootImageCreator:
         try:
             process = subprocess.Popen(["zip", zipfileName, self.outputFileName],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-            stdout, stderr = process.communicate()
+            process.communicate()
         except Exception as ex:
             raise Exception('Failed to zip the image file MSG:'+str(ex))
         self.__print(diagnosticOutput,'   == Done')
@@ -804,7 +802,7 @@ class BootImageCreator:
         self.__print(diagnosticOutput,' --> Print the partition table of'+\
              ' the final Image file with "fdisk"')
         if not os.path.isfile(self.__imageFilepath):
-            raise Exception('The output image file does not exsist')
+            raise Exception('The output image file does not exist')
         os.system('fdisk '+self.__imageFilepath+' -l')
         self.__print(diagnosticOutput,' ') 
 
@@ -873,21 +871,21 @@ class BootImageCreator:
     #
     #
     #
-    # @brief Delate a loopback device
+    # @brief delete a loopback device
     # @param diagnosticOutput       Enable/Disable the console printout
     # @param device                 Linux Loopback device string 
     #
-    def __delate_loopback(self,diagnosticOutput = True,device= None):
+    def __delete_loopback(self,diagnosticOutput = True,device= None):
         if(device == None):
             raise Exception('Loopback device for deleting not specified')
 
-        self.__print(diagnosticOutput,'--> Delate loopback device: '+str(device))
+        self.__print(diagnosticOutput,'--> delete loopback device: '+str(device))
 
         try:
             self.__runCmdInShell(diagnosticOutput,["sudo","losetup", "-d", str(device)],
                                  stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
-            raise Exception('Failed to delate loopback device: '+str(device))
+            raise Exception('Failed to delete loopback device: '+str(device))
 
         self.__loopback_used.remove(device)
     
@@ -895,7 +893,7 @@ class BootImageCreator:
     #
     #
     # @brief Clean and unmount the open loopback device
-    # @param diagnosticOutput       Enable/Disable the console printou
+    # @param diagnosticOutput       Enable/Disable the console printout
     # 
     def __unmountLoopback(self,diagnosticOutput = True):
         self.__print(diagnosticOutput,'--> Unmount and clean all open devices')
@@ -912,8 +910,8 @@ class BootImageCreator:
             self.__mounted_fs.remove(dev)
             time.sleep(DELAY_MS) # wait 3sec to give the system time to remove 
 
-        # 2. Step: Delate all used loopback devices
-        self.__print(diagnosticOutput,'--> Delate all used loopback devices')
+        # 2. Step: delete all used loopback devices
+        self.__print(diagnosticOutput,'--> delete all used loopback devices')
         for dev in self.__loopback_used: 
             self.__delete_loopback(diagnosticOutput,dev)
     #
@@ -923,7 +921,7 @@ class BootImageCreator:
     # @param diagnosticOutput       Enable/Disable the console printout
     #
     def __createEmptyImage(self,diagnosticOutput = True):
-        # Check if the image file already exist
+        # Check if the image file already exists
         if(os.path.isfile(self.__imageFilepath)):
             self.__print(diagnosticOutput,'--> Remove the old output file')
             try:
@@ -937,12 +935,12 @@ class BootImageCreator:
                                  "count=0", "seek="+str(self.totalImageSize)],
                                 stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
-            raise Exception('Failed to create a empty Image file!')
+            raise Exception('Failed to create an empty Image file!')
 
     #
     #
     #
-    # @brief Create the configured partions table with "fdisk"
+    # @brief Create the configured partition table with "fdisk"
     # @param diagnosticOutput       Enable/Disable the console printout
     #
     def __createPartitonTable(self, diagnosticOutput = True):
@@ -950,7 +948,7 @@ class BootImageCreator:
         self.__print(diagnosticOutput,'--> Create Partition Table')
         
         if self.__usedLoopback == None:
-            raise Exception("No loopback device exist for creating the partition table")
+            raise Exception("No loopback device exists for creating the partition table")
 
         # Start a new pipe with "fdisk"
         self.__print(diagnosticOutput,'   with loopback device: '+str(self.__usedLoopback))
@@ -972,11 +970,11 @@ class BootImageCreator:
         part_count = len(self.partitionTable)
         for i in range(part_count):
             parts =  self.partitionTable[i]
-            # 1.Comand: Create a new primary partition 
+            # 1.Command: Create a new primary partition 
             #           With ID, First Sector and Block Size
 
             # n : add a new partition
-            # p : Primary parttition 
+            # p : Primary partition 
             #     Partition number 
             #     First Sector  
             #     Last  Sector : Block Size
@@ -1009,7 +1007,7 @@ class BootImageCreator:
             #     Partition number 
             #     Filesystem type as HEX value
             if parts.id == 1:
-                # the first partion is not selected with the number
+                # the first partition is not selected with the number
                 cmd = str("""\
                 t
                 """+parts.type_hex+"""
@@ -1045,8 +1043,7 @@ class BootImageCreator:
         p.communicate()
         self.__print(diagnosticOutput,'   fdisk work done')
 
-        # sometimes the kernel does not reload the pattition table
-        #!a little help is needed
+        # sometimes the kernel does not reload the partition table
         if p.returncode != 0:
             try:
                 self.__print(diagnosticOutput,'--> Check partition with partprobe')
@@ -1132,9 +1129,9 @@ class BootImageCreator:
     #
     #
     #
-    # @brief Delate a Linux Loopback device 
+    # @brief delete a Linux Loopback device 
     # @param diagnosticOutput       Enable/Disable the console printout
-    # @param device                 Linux Looback deivce string
+    # @param device                 Linux Looback device string
     #
     def __delete_loopback(self,diagnosticOutput = True, device=None):
 
@@ -1142,7 +1139,7 @@ class BootImageCreator:
         try:
             self.__runCmdInShell(diagnosticOutput,["sudo","losetup", "-d", str(device)], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
-            raise Exception('Failed to delate loopback "'+ device+'"')
+            raise Exception('Failed to delete loopback "'+ device+'"')
 
         self.__loopback_used.remove(device)
 
@@ -1177,12 +1174,12 @@ class BootImageCreator:
     #  
     #
     #
-    # @brief Format a partitsion with a filesystem and a open loopback
+    # @brief Format a partition with a filesystem and a open loopback
     # @param diagnosticOutput       Enable/Disable the console printout
     # @param type_mkfs              Filesystem type in "mkfs"-format            
     #
     def __format_partition(self,diagnosticOutput, type_mkfs= None):
-        self.__print(diagnosticOutput,'--> Format partitsion with: '+str(type_mkfs))
+        self.__print(diagnosticOutput,'--> Format partition with: '+str(type_mkfs))
 
         if(type_mkfs == None):
             return
@@ -1225,11 +1222,11 @@ class BootImageCreator:
     def __prase_partition(self,diagnosticOutput= True,partition=None ):
         # Create a new loopback for the partition 
         self.__print(diagnosticOutput,'--> Prase partition with ID:'+str(partition.id))
-        # Connvert offset from sectors to byte
+        # Convert offset from sectors to byte
         offset_byte = partition.startSector * 512
         self.__createLoopbackDevice(diagnosticOutput,partition.totalSize, offset_byte)
         
-        # Fortmat the partition 
+        # Format the partition 
         self.__print(diagnosticOutput,'--> Format partition')
         self.__format_partition(diagnosticOutput, partition.type_mkfs)
 
@@ -1237,11 +1234,10 @@ class BootImageCreator:
         self.__copyFiles2partitison(diagnosticOutput,partition)
         time.sleep(DELAY_MS)
 
-        # Delate the loopback
+        # delete the loopback
         #self.__unmountLoopback(diagnosticOutput)
         self.__delete_loopback(True,self.__usedLoopback)
         self.__print(diagnosticOutput,'   = Done')
-
 
     # 
     # 
@@ -1276,7 +1272,7 @@ class BootImageCreator:
     # 
     #
     #
-    # @brief Copy files to a partitison
+    # @brief Copy files to a partition
     # @param diagnosticOutput       Enable/Disable the console printout    
     # @param partition               partition object of the partition to prase
     #  
@@ -1376,20 +1372,20 @@ class BootImageCreator:
 #
 # @brief default XML Blueprint file
 #
-defalut_blueprint_xml_file ='<?xml version="1.0" encoding = "UTF-8" ?>\n'+\
+default_blueprint_xml_file ='<?xml version="1.0" encoding = "UTF-8" ?>\n'+\
     '<!-- Linux Distribution Blueprint XML file -->\n'+\
     '<!-- Used by the Python script "LinuxDistro2Image.py -->\n'+\
     '<!-- to create a custom Linux boot image file -->\n'+\
     '<!-- Description: -->\n'+\
     '<!-- item "partition" describes a partition on the final image file-->\n'+\
-    '<!-- L "id"        => Partition number on final image (1 is the lowest number) -->\n'+\
-    '<!-- L "type"      => Filesystem type of image file  -->\n'+\
+    '<!-- L "id"        => Partition number on the final image (1 is the lowest number) -->\n'+\
+    '<!-- L "type"      => Filesystem type of partition  -->\n'+\
     '<!--   L       => ext[2-4], Linux, xfs, vfat, fat, none, raw, swap -->\n'+\
     '<!-- L "size"      => Partition size -->\n'+\
     '<!-- 	L	    => <no>: Byte, <no>K: Kilobyte, <no>M: Megabyte or <no>G: Gigabyte -->\n'+\
     '<!-- 	L	    => "*" dynamic file size => Size of the files2copy + offset  -->\n'+\
-    '<!-- L "offset"    => in case a dynamic size is used is the offset value added to file size-->\n'+\
-    '<!-- L "devicetree"=> Complie the Linux Device (.dts) inside the partison if available (Top folder only)-->\n'+\
+    '<!-- L "offset"    => in case a dynamic size is used the offset value is added to file size-->\n'+\
+    '<!-- L "devicetree"=> compile the Linux Device (.dts) inside the partition if available (Top folder only)-->\n'+\
     '<!-- 	L 	    => Yes: Y or No: N -->\n'+\
     '<!-- L "unzip"     => Unzip a compressed file if available (Top folder only) -->\n'+\
     '<!-- 	L 	    => Yes: Y or No: N -->\n'+\
@@ -1416,7 +1412,7 @@ if __name__ == '__main__':
     print('#    ##     ##  ######        ##     #######   ######     ##     #######     #') 
     print('#                                                                            #')
     print("#       AUTOMATIC SCRIPT TO COMBINE ALL FILES OF A EMBEDDED LINUX TO A       #")
-    print("#                       BOOTABLIE DISTRIBUTABLE IMAGE FILE                   #")
+    print("#                       BOOTABLE DISTRIBUTABLE IMAGE FILE                    #")
     print('#                                                                            #')
     print("#               by Robin Sebastian (https://github.com/robseb)               #")
     print('#                          Contact: git@robseb.de                            #')
@@ -1435,18 +1431,18 @@ if __name__ == '__main__':
     # Check that the Version runs on Linux
     if not sys.platform =='linux':
         print('ERROR: This script works only on Linux!')
-        print("Please run this script on a Ubuntu Linux Computer!")
+        print("Please run this script on a Linux Computer!")
         sys.exit()
 
     ############################################ Create XML Blueprint file ###########################################
     
     if os.path.exists('DistroBlueprint.xml'):
-        # Check that the DistroBlueprint XML file looks vialed
-        print('---> The Linux Distribution blueprint XML file exist')
+        # Check that the DistroBlueprint XML file looks valid
+        print('---> The Linux Distribution blueprint XML file exists')
     else:
         print(' ---> Creating a new Linux Distribution blueprint XML file')
         with open('DistroBlueprint.xml',"w") as f: 
-            f.write(defalut_blueprint_xml_file)
+            f.write(default_blueprint_xml_file)
 
         print('   Open the "DistroBlueprint.xml" with a text editor ')
         print('   to configure the partition table of Image file to create')
@@ -1454,7 +1450,7 @@ if __name__ == '__main__':
         _wait_ = input('Type anything to continue ... ')
 
     ############################################ Read the XML Blueprint file  ###########################################
-    ####################################### & Process the settings of a partitsion   ####################################
+    ####################################### & Process the settings of a partition   ####################################
     print('---> Read the XML blueprint file ')
     try:
         tree = ET.parse('DistroBlueprint.xml') 
@@ -1500,24 +1496,24 @@ if __name__ == '__main__':
     outputfileName   = "LinuxDistro.img"
     outputZipFileName= "LinuxDistro.zip"
 
-    ####################################### Check if the partitson folder are already available  #######################################
+    ####################################### Check if the partition folders are already available  #######################################
 
-    # Generate working folder names for every partitsion
+    # Generate working folder names for every partition
     working_folder_pat = []
     for part in partitionList:
         working_folder_pat.append(part.giveWorkingFolderName(True))
 
-    image_folder_name = 'Image_partisons'
+    image_folder_name = 'Image_partitions'
     create_new_folders = True
 
-    # Check if the primary partison folder exist
+    # Check if the primary partition folder exists
     if os.path.isdir(image_folder_name):
         if not len(os.listdir(image_folder_name)) == 0:
-            # Check that all partison folder exist
+            # Check that all partition folders exist
             for file in os.listdir(image_folder_name):
                 if not file in working_folder_pat:
                     print('ERROR:  The existing "'+image_folder_name+'" Folder is not compatible with this configuration!')
-                    print('        Please delate or rename the folder "'+image_folder_name+'" to allow the script')
+                    print('        Please delete or rename the folder "'+image_folder_name+'" to allow the script')
                     print('         to generate a matching folder structure for your configuration')
                     sys.exit()  
             create_new_folders = False
@@ -1525,26 +1521,26 @@ if __name__ == '__main__':
         try:
             os.makedirs(image_folder_name)
         except Exception as ex:
-            print(' ERROR: Failed to create the image import folder on this direcotry!')
+            print(' ERROR: Failed to create the image import folder on this directory!')
             print(' Msg.: '+str(ex))
             sys.exit()
 
-###################################### Create new import folders for every partison   #######################################
+###################################### Create new import folders for every partition   #######################################
     if create_new_folders:
         for folder in working_folder_pat:
             try:
                 os.makedirs(image_folder_name+'/'+folder)
             except Exception as ex:
-                print(' ERROR: Failed to create the partison import folder on this direcotry!')
+                print(' ERROR: Failed to create the partition import folder on this directory!')
                 print(' Msg.: '+str(ex))
                 sys.exit()
  
-#################################  Allow user to import files to the partison folders  ######################################
+#################################  Allow the user to import files to the partition folders  ###################################
     print('\n#############################################################################')
-    print('#    Copy files to the partison folders to allow the pre-installment         #')
-    print('#                    to the depending image partison                         #')
-    print('#                                                                            #')
-    print('#                     === Folders for each partison ===                      #')
+    print('#    Copy files to the partition folders to allow the pre-installment         #')
+    print('#                    to the depending image partition                         #')
+    print('#                                                                             #')
+    print('#                     === Folders for every partition ===                     #')
     for part in partitionList:
         print('# Folder: "'+image_folder_name+'/'+part.giveWorkingFolderName(False)+'"| No.: '+ \
                                 str(part.id)+' Filesystem: '+part.type+' Size: '+str(part.size_str))
@@ -1569,23 +1565,23 @@ if __name__ == '__main__':
         compress_output = False
     print('##############################################################################')
 
-################################## Scan the partison folders to list all directories #######################################
-    print('\n---> Scan each partison folder to find all file directories')
-    print('      and calculate the total partison size')
+################################## Scan the partition folders to list all directories #######################################
+    print('\n---> Scan every partition folder to find all file directories')
+    print('      and calculate the total partition size')
     try:
         for part in partitionList:
             # List every file inside the folder
             part.findFileDirectories(True,os.getcwd()+'/'+image_folder_name+'/'+part.giveWorkingFolderName(False))
-            # Calculate the total file size of the partison 
+            # Calculate the total file size of the partition 
             part.calculatePartitionFilesize(True)
     except Exception as ex:
-        print(' ERROR: Failed to calculate the total partison size')
+        print(' ERROR: Failed to calculate the total partition size')
         print(' Msg.: '+str(ex))
         sys.exit()
 
 
 ################################# Insert the partition table to the BootImageCreator ######################################
-    print('---> Insert the partitison list to the image generator') 
+    print('---> Insert the partition list to the image generator') 
     try:
         bootImageCreator = BootImageCreator(partitionList,outputfileName,os.getcwd())
     except Exception as ex:
@@ -1605,7 +1601,7 @@ if __name__ == '__main__':
 ############################################# Create the new Image File ###################################################
     bootImageCreator.generateImage()
 
-############################# Print the Parition table of the image file with "fdisk" #####################################
+############################# Print the Partition table of the image file with "fdisk" #####################################
     bootImageCreator.printFinalPartitionTable()
 
     if compress_output:
