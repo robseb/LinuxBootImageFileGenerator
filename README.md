@@ -279,7 +279,7 @@ The following steps describes in the right sequence the required Python methods 
     #  
     def compressOutput(self, diagnosticOutput=True,zipfileName=None):
     ````
-
+<br>
 
     
     
