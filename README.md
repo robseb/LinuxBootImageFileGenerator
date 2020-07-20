@@ -9,9 +9,9 @@
 
 <br>
 
-**This Python script can generate an bootable image file with Kernel-,bootloader- and user-files . Tools like ["*rufus*"](https://github.com/pbatard/rufus) can write for instance a SD-card to enable the booting of a Linux Distribution**
+**This Python script can generate an bootable image file with Kernel-,bootloader- and user-files. Tools like ["*rufus*"](https://github.com/pbatard/rufus) can write for instance a SD-card to enable the booting of a Linux Distribution.**
 
-The script can be used inside an other python application or it can be executed as a console task. In the console mode is a simple XML-file used to describe the partition table of a final image file.
+The script can be used inside an other Python application or it can be executed as a console task. In the console mode is a simple *XML*-file used to describe the partition table of a final image file.
 Then  the script generates folders depending on the image configuration. In the next step it is enabled for the user to copy files and folders to the partitions. These files will be added to the final image file. 
 The script can automatically compile Linux device tree (*.dts*)-files, unzip archive files, like "*tar.gz*" or "*zip*", and can calculate the required partition size for the entire content.
 
