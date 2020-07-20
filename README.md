@@ -134,8 +134,9 @@ For generating a bootable image by executing a single Linux command please follo
     The following illustration shows generated folder structure with the previous XML configuration file.
 
     ![Alt text](doc/FolderStrucre.png?raw=true "Example of the folder structure")
+    
 
-    **Copy or drag&drop your files/folders to this partition folder to pre-install these content to the final image.**
+    **Copy or drag&drop your files/folders to these partition folders to pre-install these content to the final image.**
 
     *Note: On RAW partitions are only files allowed!*
 
