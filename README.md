@@ -61,7 +61,7 @@ For generating a bootable image by executing a single Linux command please follo
     
 * Clone this repository with the following Linux console command
     ````shell
-    git clone https://github.com/robseb/LinuxBootImageGenerator.git
+    git clone https://github.com/robseb/LinuxBootImageFileGenerator.git
     ````
     * To install "*git*"
         * Ubuntu
