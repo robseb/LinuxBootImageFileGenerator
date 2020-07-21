@@ -129,7 +129,7 @@ For generating a bootable image by executing a single Linux command please follo
 
     The script will generate for every selected partition a depending folder. At this point it is enabled to drag&drop files and folders 
     to the partition folder. This content will then be included in the final image file. 
-    Linux device tree files and archive copied to the partition folder will be automatically processed by the script incase this feature was enabled for the partition inside the XML file. Of cause, archive files or uncompiled device tree files will not be added to the final image. 
+    Linux device tree- and archive-files, copied to the partition folder, will be automatically processed by the script incase these features were enabled for the partition inside the XML file. Of cause, archive files or uncompiled device tree files will not be added to the final image. 
 
     The following illustration shows generated folder structure with the previous XML configuration file.
 
