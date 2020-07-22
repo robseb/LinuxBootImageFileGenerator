@@ -1390,8 +1390,8 @@ default_blueprint_xml_file ='<?xml version="1.0" encoding = "UTF-8" ?>\n'+\
     '<!-- L "unzip"     => Unzip a compressed file if available (Top folder only) -->\n'+\
     '<!-- 	L 	    => Yes: Y or No: N -->\n'+\
     '<LinuxDistroBlueprint>\n'+\
-    '<partition id="1" type="vfat" size="*" offset="500M" devicetree="Y" unzip="N" />\n'+\
-    '<partition id="2" type="ext3" size="*" offset="1M" devicetree="N" unzip="Y" />\n'+\
+    '<partition id="1" type="vfat" size="*" offset="1M" devicetree="Y" unzip="N" />\n'+\
+    '<partition id="2" type="ext3" size="*" offset="500M" devicetree="N" unzip="Y" />\n'+\
     '<partition id="3" type="RAW" size="*" offset="20M"  devicetree="N" unzip="N" />\n'+\
     '</LinuxDistroBlueprint>\n'
 
