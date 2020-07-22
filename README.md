@@ -118,8 +118,8 @@ For generating a bootable image by executing a single Linux command please follo
     <!-- L "unzip"     => Unzip a compressed file if available (Top folder only) -->
     <!-- 	L 	    => Yes: Y or No: N -->
     <LinuxDistroBlueprint>
-    <partition id="1" type="vfat" size="*" offset="500M" devicetree="Y" unzip="N" />
-    <partition id="2" type="ext3" size="*" offset="1M" devicetree="N" unzip="Y" />
+    <partition id="1" type="vfat" size="*" offset="1M" devicetree="Y" unzip="N" />
+    <partition id="2" type="ext3" size="*" offset="500M" devicetree="N" unzip="Y" />
     <partition id="3" type="RAW" size="*" offset="20M"  devicetree="N" unzip="N" />
     </LinuxDistroBlueprint>
     ````
