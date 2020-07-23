@@ -696,8 +696,8 @@ ___
 
 **Robin Sebastian**
 
-*LinuxBootImageGenerator* and [*rsyocto*](https://github.com/robseb/rsyocto) are projects, that I have fully developed on my own.
-No companies are involved in this projects.
+*LinuxBootImageGenerator* and [*rsyocto*](https://github.com/robseb/rsyocto) are Projects, that I have fully developed on my own.
+No companies are involved in these projects.
 I’m recently graduated as a master in electrical engineering with the major embedded systems (*M. Sc.*).
 
 I'm open for cooperations as a freelancer to realize your specific requirements.
