@@ -16,14 +16,19 @@
 #
 # Robin Sebastian (https://github.com/robseb)
 # Contact: git@robseb.de
+# Repository: https://github.com/robseb/LinuxBootImageFileGenerator
 #
-# Python Script to automatically generate a Linux Distribution Boot Image file
+# Python Script to automatically generate a  bootable Image file with
+# a specifiable partition table for embedded Linux distributions
 
 # (2020-07-17) Vers.1.0 
 #   first Version 
 #
+# (2020-07-23) Vers.1.01
+#   datecode in output file names
+#
 
-version = "1.00"
+version = "1.01"
 
 import os
 import sys
@@ -37,6 +42,7 @@ from typing import NamedTuple
 import math
 import glob
 from pathlib import Path
+from datetime import datetime
 
 #
 #
@@ -1390,8 +1396,8 @@ default_blueprint_xml_file ='<?xml version="1.0" encoding = "UTF-8" ?>\n'+\
     '<!-- L "unzip"     => Unzip a compressed file if available (Top folder only) -->\n'+\
     '<!-- 	L 	    => Yes: Y or No: N -->\n'+\
     '<LinuxDistroBlueprint>\n'+\
-    '<partition id="1" type="vfat" size="*" offset="1M" devicetree="Y" unzip="N" />\n'+\
-    '<partition id="2" type="ext3" size="*" offset="500M" devicetree="N" unzip="Y" />\n'+\
+    '<partition id="1" type="vfat" size="*" offset="500M" devicetree="Y" unzip="N" />\n'+\
+    '<partition id="2" type="ext3" size="*" offset="1M" devicetree="N" unzip="Y" />\n'+\
     '<partition id="3" type="RAW" size="*" offset="20M"  devicetree="N" unzip="N" />\n'+\
     '</LinuxDistroBlueprint>\n'
 
@@ -1492,9 +1498,13 @@ if __name__ == '__main__':
             print(' Msg.: '+str(ex))
             sys.exit()
 
+    # Add a datecode to the output file names
+    now = datetime.now()
+    dt_string = now.strftime("%Y%m%d_%H%M")
+
     # Use the default name "LinuxDistro.img" as output file name
-    outputfileName   = "LinuxDistro.img"
-    outputZipFileName= "LinuxDistro.zip"
+    outputfileName   = "LinuxDistro"+dt_string+".img"
+    outputZipFileName= "LinuxDistro"+dt_string+".zip"
 
     ####################################### Check if the partition folders are already available  #######################################
 
@@ -1626,8 +1636,8 @@ if __name__ == '__main__':
     print('#                                                                              #')
     print('#    LinuxBootImageGenerator and rsYocto are projects, that I have fully       #')
     print('#        developed on my own. No companies are involved in these projects.     #')
-    print('#        Today I am a Master Student of electronic engineering                 #')
-    print('#            Please support me for further development                         #')
+    print('#        I am recently graduated as Master of Since of electronic engineering  #')
+    print('#                Please support me for further development                     #')
     print('#                                                                              #')
     print('################################################################################')
 # EOF
