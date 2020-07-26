@@ -25,10 +25,14 @@
 #   first Version 
 #
 # (2020-07-23) Vers.1.01
-#   datecode in output file names
+#   date code in output file names
+#
+# (2020-07-26) Vers. 1.02
+#   delate unziped files after build
+#
 #
 
-version = "1.01"
+version = "1.02"
 
 import os
 import sys
@@ -80,6 +84,7 @@ class Partition:
     BlockSectorSize: int    # Block size of the partition
 
     __filesImported:bool    # Indicates that files are imported to the list 
+    __unzipedFiles =[]      # List of all unziped files/folder to remove in the deconstructor  
 
     #  
     # 
@@ -156,6 +161,24 @@ class Partition:
         self.scan_mode = operation_mode
 
         self.totalSize = None
+
+    #
+    #
+    #
+    # @brief Deconstructor 
+    #        Remove the content of all unziped files
+    def __del__(self):
+        for it in self.__unzipedFiles:
+            if os.path.isfile(it):
+                try:
+                    os.remove(it)
+                except Exception:
+                    raise Exception('Failed to remove the archive content file "'+str(it)+'"')
+            elif os.path.isdir(it):
+                try:
+                    shutil.rmtree(it)
+                except Exception:
+                    raise Exception('Failed to remove the archive content folder "'+str(it)+'"')
     
     #
     #
@@ -559,8 +582,10 @@ class Partition:
         tar_files= []
         tar_gz_files =[]
         zip_files =[]
+        searchPath_beforeZip =[]
+        searchPath_afterZip =[]
         if singleFile:
-            # Look for a .dts file in the top folder
+            # Look for a archive file in the top folder
             if os.path.isfile(searchPath):
                 if searchPath.find('.tar.gz') >0:
                     tar_gz_files.append(searchPath)
@@ -569,7 +594,7 @@ class Partition:
                 elif searchPath.find('.zip') >0:
                     zip_files.append(searchPath)
         else:
-            # Look for a .dts file in the top folder
+            # Look for a archive file in the top folder
             for file in os.listdir(searchPath):
                 if os.path.isfile(searchPath+'/'+file):
                     if file.find('.tar.gz') >0:
@@ -578,6 +603,13 @@ class Partition:
                         tar_files.append(searchPath+'/'+file)
                     elif file.find('.zip') >0:
                         zip_files.append(searchPath+'/'+file)
+        # Archive files for processing available ?
+        if (not tar_files == None) or (not tar_gz_files == None) or (not zip_files == None):
+            # List all files in the folder to notice the changes after the unziping
+            if singleFile:
+                searchPath_beforeZip.append(searchPath)
+            else:
+                searchPath_beforeZip = os.listdir(searchPath)
 
         # Progress all tar files 
         if not tar_files == None:
@@ -609,6 +641,24 @@ class Partition:
                 except subprocess.CalledProcessError:
                     raise Exception('Failed to unzip the file "'+arch+'"\n')
         
+        # Archive files for processing available ?
+        if (not tar_files == None) or (not tar_gz_files == None) or (not zip_files == None):
+            # List all files in the folder to notice the changes after the unziping
+            if singleFile:
+                searchPath_afterZip.append(searchPath)
+            else:
+                searchPath_afterZip = os.listdir(searchPath)
+
+        # Remove double files from the list
+        for iteam in searchPath_afterZip:
+            if not iteam in searchPath_beforeZip:
+                self.__unzipedFiles.append(searchPath+'/'+iteam)
+
+        # List the content off all unzip archive files 
+        self.__print(diagnosticOutput,'    -- List of the content of all unzip files/folders --')
+        for it in self.__unzipedFiles:
+            self.__print(diagnosticOutput,'       '+it)
+
         self.__print(diagnosticOutput,'--> Uncompressing of all files is done')
 
 
