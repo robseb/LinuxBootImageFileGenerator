@@ -281,8 +281,18 @@ The following steps describes in the right sequence the required Python methods 
     ````
 <br>
 
+## Link it to your repository for designing a custom build system
+
+Use following commands inside your repository to link this Python library to your build system:
+
+````bash
+git submodule https://github.com/robseb/LinuxBootImageFileGenerator.git & git submodule update --init
+````
+<br>    
+
+<br>
 <details>
-<summary><strong>The output after an execution</strong></summary>
+<summary><strong>Example output after an execution</strong></summary>
 <a name="step5"></a>
 
 ````shell
