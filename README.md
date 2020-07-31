@@ -288,6 +288,10 @@ Use following commands inside your repository to link this Python library to you
 ````bash
 git submodule https://github.com/robseb/LinuxBootImageFileGenerator.git LinuxBootImageFileGenerator & git submodule update --init
 ````
+To update the linked repository (*submodule*) use following command:
+````bash
+git pull --recurse-submodules & git submodule update --remote --recursive
+````
 <br>    
 
 <br>
