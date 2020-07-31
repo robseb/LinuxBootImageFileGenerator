@@ -286,7 +286,7 @@ The following steps describes in the right sequence the required Python methods 
 Use following commands inside your repository to link this Python library to your build system:
 
 ````bash
-git submodule https://github.com/robseb/LinuxBootImageFileGenerator.git & git submodule update --init
+git submodule https://github.com/robseb/LinuxBootImageFileGenerator.git LinuxBootImageFileGenerator & git submodule update --init
 ````
 <br>    
 
