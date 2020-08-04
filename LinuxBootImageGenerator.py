@@ -30,9 +30,11 @@
 # (2020-07-26) Vers. 1.02
 #   delate unziped files after build
 #
+# (2020-08-04) Vers. 1.03
+#   fixed an issue with improperly copied symbolic links
 #
 
-version = "1.02"
+version = "1.03"
 
 import os
 import sys
@@ -617,9 +619,10 @@ class Partition:
             for arch in tar_files:
                 self.__print(diagnosticOutput,'Unzip the file:" '+arch+'"')
                 try:
-                    os.system('tar xfv '+arch+' -C '+searchPath)
+                    os.system('tar xhfv '+arch+' -C '+searchPath)
                 except subprocess.CalledProcessError:
                     raise Exception('Failed to unzip the file "'+arch+'"\n')
+                self.__print(diagnosticOutput,'   == Done')
 
         # Progress all tar.gz files 
         if not tar_gz_files == None:
@@ -627,9 +630,10 @@ class Partition:
             for arch in tar_gz_files:
                 self.__print(diagnosticOutput,'Unzip the file:" '+arch+'"')
                 try:
-                    os.system('tar -xzpf '+arch+' -C '+searchPath)
+                    os.system('tar -xhzvf '+arch+' -C '+searchPath)
                 except subprocess.CalledProcessError:
                     raise Exception('Failed to unzip the file "'+arch+'"\n')
+                self.__print(diagnosticOutput,'   == Done')
 
         # Progress all zip files 
         if not zip_files == None:
@@ -640,6 +644,7 @@ class Partition:
                     os.system('unzip '+arch+' -d '+searchPath)
                 except subprocess.CalledProcessError:
                     raise Exception('Failed to unzip the file "'+arch+'"\n')
+                self.__print(diagnosticOutput,'   == Done')
         
         # Archive files for processing available ?
         if (not tar_files == None) or (not tar_gz_files == None) or (not zip_files == None):
