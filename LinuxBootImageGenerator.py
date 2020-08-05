@@ -32,9 +32,15 @@
 #
 # (2020-08-04) Vers. 1.03
 #   fixed an issue with improperly copied symbolic links
+#   Bug Reporter: github.com/NignetShark
+#
+# (2020-08-04) Vers. 1.04
+#   fixed an issue with file ownerships and adding deconstructor to unmout 
+#   all open loopback devices 
+#   Bug Reporter: github.com/NignetShark
 #
 
-version = "1.03"
+version = "1.04"
 
 import os
 import sys
@@ -173,15 +179,15 @@ class Partition:
         for it in self.__unzipedFiles:
             if os.path.isfile(it):
                 try:
-                    os.remove(it)
+                    os.system('sudo rm '+it)
                 except Exception:
                     raise Exception('Failed to remove the archive content file "'+str(it)+'"')
             elif os.path.isdir(it):
                 try:
-                    shutil.rmtree(it)
+                    os.system('sudo rm -r '+it)
                 except Exception:
                     raise Exception('Failed to remove the archive content folder "'+str(it)+'"')
-    
+
     #
     #
     #
@@ -619,7 +625,7 @@ class Partition:
             for arch in tar_files:
                 self.__print(diagnosticOutput,'Unzip the file:" '+arch+'"')
                 try:
-                    os.system('tar xhfv '+arch+' -C '+searchPath)
+                    os.system('sudo tar --same-owner xhfv '+arch+' -C '+searchPath)
                 except subprocess.CalledProcessError:
                     raise Exception('Failed to unzip the file "'+arch+'"\n')
                 self.__print(diagnosticOutput,'   == Done')
@@ -630,7 +636,7 @@ class Partition:
             for arch in tar_gz_files:
                 self.__print(diagnosticOutput,'Unzip the file:" '+arch+'"')
                 try:
-                    os.system('tar -xhzvf '+arch+' -C '+searchPath)
+                    os.system('sudo tar --same-owner -xzvpf '+arch+' -C '+searchPath) 
                 except subprocess.CalledProcessError:
                     raise Exception('Failed to unzip the file "'+arch+'"\n')
                 self.__print(diagnosticOutput,'   == Done')
@@ -765,7 +771,7 @@ class BootImageCreator:
         self.totalImageSize = round(self.totalImageSize)
 
         self.totalImageSizeStr = self.__convert_byte2str(self.totalImageSize)
-    
+
     #
     #
     #
@@ -813,7 +819,6 @@ class BootImageCreator:
         self.__createPartitonTable(diagnosticOutput)
 
         # Step 5: Clear and unmount the used loopback device
-        #self.__unmountLoopback(diagnosticOutput)
         self.__delete_loopback(diagnosticOutput,self.__usedLoopback)
 
         # Step 6: Copy the files to the partition table
@@ -821,6 +826,8 @@ class BootImageCreator:
             self.__print(diagnosticOutput,'  + Prase partition Number '+ str(parts.id))
             self.__prase_partition(diagnosticOutput,parts)
 
+        # Step 7: Unmount and delate all open loopback devices 
+        self.__unmountDeleteLoopbacks(diagnosticOutput)
     # 
     #
     #
@@ -953,26 +960,34 @@ class BootImageCreator:
     #
     #
     #
-    # @brief Clean and unmount the open loopback device
+    # @brief Clean and unmount all open loopback devices
     # @param diagnosticOutput       Enable/Disable the console printout
     # 
-    def __unmountLoopback(self,diagnosticOutput = True):
+    def __unmountDeleteLoopbacks(self,diagnosticOutput = True):
         self.__print(diagnosticOutput,'--> Unmount and clean all open devices')
 
         # 1. Step: Unmount all open loopback devices
         self.__print(diagnosticOutput,'  Unmount all open loopback devices')
         for dev in self.__mounted_fs:
             self.__print(diagnosticOutput,'unmount device: '+str(dev))
-            p = subprocess.Popen(["sudo","umount", dev],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            p.wait()
-            if p.returncode != 0:
-                raise Exception('Failed to unmount device:'+str(dev))
-            self.__mounted_fs.remove(dev)
-            time.sleep(DELAY_MS) # wait 3sec to give the system time to remove 
+
+            if os.path.isdir(dev):
+                try: 
+                    p = subprocess.Popen(["sudo","umount", dev],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    p.wait()
+                except Exception:
+                    raise Exception('Failed to unmount device:'+str(dev))
+                if p.returncode != 0:
+                    raise Exception('Failed to unmount device:'+str(dev))
+                self.__mounted_fs.remove(dev)
+                time.sleep(DELAY_MS)
+            else:
+                self.__print(diagnosticOutput,'The device: '+str(dev)+' was not mounted')
 
         # 2. Step: delete all used loopback devices
         self.__print(diagnosticOutput,'--> delete all used loopback devices')
+     
         for dev in self.__loopback_used: 
             self.__delete_loopback(diagnosticOutput,dev)
     #
@@ -1018,10 +1033,10 @@ class BootImageCreator:
                                 stdin=subprocess.PIPE,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError:
-            self.__unmountLoopback(diagnosticOutput)
+            self.__unmountDeleteLoopbacks(diagnosticOutput)
             raise Exception('Error during executing of "fdisk"')
         except ValueError:
-            self.__unmountLoopback(diagnosticOutput)
+            self.__unmountDeleteLoopbacks(diagnosticOutput)
             raise Exception('Invalid arguments during executing of "fdisk"')
       
         # device pipe is open -> fdisk command shell is open
@@ -1114,11 +1129,11 @@ class BootImageCreator:
                 stdout, stderr = process.communicate()
 
                 if len(stdout) >1: 
-                    self.__unmountLoopback(diagnosticOutput)
+                    self.__unmountDeleteLoopbacks(diagnosticOutput)
                     raise Exception("Could not reload the partition table from image")
 
             except subprocess.CalledProcessError:
-                self.__unmountLoopback(diagnosticOutput)
+                self.__unmountDeleteLoopbacks(diagnosticOutput)
                 raise Exception("Could not reload the partition table from image")
             self.__print(diagnosticOutput,'    = Okay')
 
@@ -1148,7 +1163,7 @@ class BootImageCreator:
                             ["sudo","losetup","--show", "-f",
                             "--sizelimit", str(size), self.__imageFilepath])
         except subprocess.CalledProcessError:
-            self.__unmountLoopback(diagnosticOutput)
+            self.__unmountDeleteLoopbacks(diagnosticOutput)
             raise Exception("Failed to get a loopback device")
         
         # convert the loop device name as string
@@ -1183,6 +1198,7 @@ class BootImageCreator:
         device = '/dev/loop'+number_str
 
         self.__loopback_used.append(device)
+        
         self.__print(diagnosticOutput,'    Loopback device used:'+str(device))
         self.__usedLoopback = device
         return device
@@ -1199,7 +1215,7 @@ class BootImageCreator:
         self.__print(diagnosticOutput,'--> Remove the loopback "'+device+'"')
         try:
             self.__runCmdInShell(diagnosticOutput,["sudo","losetup", "-d", str(device)], stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
+        except Exception:
             raise Exception('Failed to delete loopback "'+ device+'"')
 
         self.__loopback_used.remove(device)
@@ -1268,7 +1284,7 @@ class BootImageCreator:
         # Read if a error occurs 
         process.wait()
         if process.returncode !=0: 
-            self.__unmountLoopback(diagnosticOutput)
+            self.__unmountDeleteLoopbacks(diagnosticOutput)
             raise Exception('Formating with '+str(TypeError)+' failed')
 
         self.__print(diagnosticOutput,'   Execution is done')
@@ -1296,8 +1312,8 @@ class BootImageCreator:
         time.sleep(DELAY_MS)
 
         # delete the loopback
-        #self.__unmountLoopback(diagnosticOutput)
-        self.__delete_loopback(True,self.__usedLoopback)
+        self.__unmount(diagnosticOutput,self.__usedLoopback)
+        self.__delete_loopback(diagnosticOutput,self.__usedLoopback)
         self.__print(diagnosticOutput,'   = Done')
 
     # 
@@ -1321,7 +1337,7 @@ class BootImageCreator:
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
         if p.returncode != 0:
-            self.__unmountLoopback(diagnosticOutput)
+            self.__unmountDeleteLoopbacks(diagnosticOutput)
             raise Exception('Failed to unmout the mounting point '+\
                             str(mounting_point))
 
@@ -1329,6 +1345,7 @@ class BootImageCreator:
             shutil.rmtree(mounting_point, ignore_errors=False) 
         except Exception:
             raise Exception('Failed to remove the old mounting point folder')
+        self.__mounted_fs.remove(mounting_point)
 
     # 
     #
@@ -1357,7 +1374,7 @@ class BootImageCreator:
                 stdout, stderr = process.communicate()
 
                 if process.returncode != 0:
-                    self.__unmountLoopback(diagnosticOutput)
+                    self.__unmountDeleteLoopbacks(diagnosticOutput)
                     raise Exception('Failed to copy file '+str(file)+' to the partition')
 
                 offset_byte = offset_byte + os.stat(file).st_size
@@ -1373,7 +1390,7 @@ class BootImageCreator:
             try:
                 os.mkdir(mounting_point)
             except OSError:
-                self.__unmountLoopback(diagnosticOutput)
+                self.__unmountDeleteLoopbacks(diagnosticOutput)
                 raise Exception('Failed to create the mounting point folder')
             
             #print("sudo mount -t "+str(partition.type)+" "+self.__usedLoopback+" "+mounting_point)
@@ -1383,8 +1400,9 @@ class BootImageCreator:
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             p.wait()
             if p.returncode != 0:
-                self.__unmountLoopback(diagnosticOutput)
+                self.__unmountDeleteLoopbacks(diagnosticOutput)
                 raise Exception('Failed to mount the filesystem')
+            self.__mounted_fs.append(mounting_point)
             self.__print(diagnosticOutput,'   = done')
 
             # 2.Step: Copy the files to the folder
@@ -1413,7 +1431,7 @@ class BootImageCreator:
 
                 except Exception as ex:
                         self.__unmount(diagnosticOutput,mounting_point)
-                        self.__unmountLoopback(diagnosticOutput)
+                        self.__unmountDeleteLoopbacks(diagnosticOutput)
                         raise Exception('Failed to copy the file "'+file+'" to the mounting point')
             self.__print(diagnosticOutput,'   == Done')
             
