@@ -686,7 +686,7 @@ class Partition:
 #  
 class BootImageCreator:
     partitionTable=[]           # Partition list decoded from the XML file
-    outputFileName: str         # Name of the output image file with ".img" 
+    outputFileName: str    # Name of the output image file with ".img" 
     pathOfOutputImageDir: str   # Directory of the output file 
     totalImageSize : int        # Total image size of all partitions in byte 
     totalImageSizeStr : str     # Total image size of all partitions as string (1MB,1GB)
@@ -702,10 +702,10 @@ class BootImageCreator:
     #
     # @brief Constructor
     # @param partitionTable          partitionTable as list of "Partition" class objects 
-    # @param outputFileName          Name of the output image file with the suffix ".img"
+    # @param outputImageFileName          Name of the output image file with the suffix ".img"
     # @param pathOfOutputImageDir    File path of the output image file 
     #  
-    def __init__(self, partitionTable=None,outputFileName=None,pathOfOutputImageDir=None):
+    def __init__(self, partitionTable=None,outputImageFileName=None,pathOfOutputImageDir=None):
         # Check that the partition number is only available once
         partitionTable_local = []
         id_list_local =[]
@@ -753,14 +753,14 @@ class BootImageCreator:
         self.pathOfOutputImageDir= pathOfOutputImageDir
 
         # Check that the name of output file is okay
-        if not re.match("^[a-z0-9\._]+$", outputFileName, re.I):
-            raise Exception('The name '+str(outputfileName)+' can not be used as Linux file name!')
+        if not re.match("^[a-z0-9\._]+$", outputImageFileName, re.I):
+            raise Exception('The name '+str(outputImageFileName)+' can not be used as Linux file name!')
         
-        if outputfileName.find(".img")==-1:
+        if outputImageFileName.find(".img")==-1:
             raise Exception('The selected output file name has not the suffix ".img"!')
 
-        self.outputFileName = outputfileName
-        self.__imageFilepath = pathOfOutputImageDir + '/'+outputfileName 
+        self.outputFileName = outputImageFileName
+        self.__imageFilepath = pathOfOutputImageDir + '/'+outputImageFileName 
 
         # Calculate the total image size
         self.totalImageSize =0
