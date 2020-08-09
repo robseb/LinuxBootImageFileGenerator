@@ -39,8 +39,10 @@
 #   all open loopback devices 
 #   Bug Reporter: github.com/NignetShark
 #
+# (2020-08-09) Vers. 1.05
+#  adding u-boot script compilation feature 
 
-version = "1.04"
+version = "1.05"
 
 import os
 import sys
@@ -87,6 +89,7 @@ class Partition:
     totalSizeStr:  str      # Total size of the partition (string 1GB, 1MB)
     
     comp_devicetree: bool   # Compile a Linux dts devicetree file if available
+    comp_ubootscript: str   # Compile u-boot script "boot.script" for architecture "arm" or "arm64"
     unzip_file: bool        # unzip a compressed file if available 
     startSector: int        # Partition Start sector 
     BlockSectorSize: int    # Block size of the partition
@@ -107,10 +110,11 @@ class Partition:
     # @param offset_str        In case a dynamic size is used the offset value is added to file size
     # @param devicetree        Compile the Linux Device (.dts) inside the partition if available 
     # @param unzip             Unzip a compressed file if available
+    # @param ubootscript       Compile the u-boot script "boot.script" for architecture "arm" or "arm64"
     # @param operation_mode    File scan mode: 1= List every file | 0= List only top files and folders
     #  
     def __init__(self,diagnosticOutput=True, id=None, type=None,size_str=None,
-                 offset_str=None,devicetree=False,unzip=False, operation_mode=0):
+                 offset_str=None,devicetree=False,unzip=False,ubootscript=None, operation_mode=0):
         
         # Convert the partition number to int 
         try:
@@ -168,6 +172,12 @@ class Partition:
         self.unzip_file = unzip
         self.scan_mode = operation_mode
 
+        # should the u-boot script "u-boot.script" be complied?
+        if not re.match('^arm|arm|$', ubootscript): 
+            raise Exception('The ubootscript input is for parrtion No. '+str(self.id)+ \
+            ' not allowed. Use "","arm" or "arm64" ')
+        self.comp_ubootscript = ubootscript
+
         self.totalSize = None
 
     #
@@ -205,7 +215,7 @@ class Partition:
         for file in fileDirectories:
             if os.path.isdir(file):
                 # In RAW partitions folders are not allowed 
-                if self.type_hex ==0:
+                if self.type_hex =='a2':
                     raise Exception('For RAW partitions are no folders allowed')
             elif not os.path.isfile(file):
                     raise Exception(' File/Folder "'+str(file)+'" does not exist!')
@@ -214,6 +224,11 @@ class Partition:
             dtsFileDir = None 
             if self.comp_devicetree == True:
                 dtsFileDir = self.__compileDeviceTree(diagnosticOutput,file)
+
+            # Compile the u-boot script 
+            ubootscrFileDir = None 
+            if self.comp_ubootscript == "arm" or self.comp_devicetree == "arm64":
+                ubootscrFileDir = self.__compileubootscript(diagnosticOutput,file)
 
             # Uncompress archive files if necessary
             uncompressedFilesDir =[]
@@ -227,6 +242,14 @@ class Partition:
                     raise Exception('Failed to find the uncompiled device tree file '+dtsFileDir)
             self.fileDirectories.remove(dtsFileDir)
         
+        # Remove the to uncompiled u-boot script from the list
+        if not ubootscrFileDir == None:
+            self.__print(diagnosticOutput,'   Exclute the file "'+ubootscrFileDir+'" from the list')
+            if not ubootscrFileDir in self.fileDirectories:
+                    raise Exception('Failed to find the uncompiled u-boot script: '+ubootscrFileDir)
+            self.fileDirectories.remove(ubootscrFileDir)
+
+
         # Remove all uncompressed archive file from the list
         if not uncompressedFilesDir == None:
             for arch in uncompressedFilesDir:
@@ -258,6 +281,12 @@ class Partition:
         if self.comp_devicetree == True:
             dtsFileDir = self.__compileDeviceTree(diagnosticOutput,searchPath)
 
+         # Compile the u-boot script 
+        ubootscrFileDir = None 
+        if self.comp_ubootscript == "arm" or self.comp_devicetree == "arm64":
+            ubootscrFileDir = self.__compileubootscript(diagnosticOutput,searchPath)
+
+
         # Uncompress archive files if necessary
         uncompressedFilesDir =[]
         if self.unzip_file == True:
@@ -272,7 +301,7 @@ class Partition:
                 for folder in os.listdir(searchPath):
                     if os.path.isdir(searchPath+'/'+folder):
                         # In RAW partition folders are not allowed 
-                        if self.type_hex ==0:
+                        if self.type_hex =='a2':
                             raise Exception('For RAW partitions are no folders allowed')
 
                         fileDirectories.append(searchPath+'/'+folder)
@@ -308,7 +337,7 @@ class Partition:
                         # all directories are processed 
                         break
                 # For RAW partitions are only files allowed
-                if self.type_hex ==0 and len(folderDirectories) >0:
+                if self.type_hex =='a2' and len(folderDirectories) >0:
                     raise Exception('For RAW partitions are no folders allowed')
 
                 # always scan the top folder for files 
@@ -337,6 +366,13 @@ class Partition:
                     raise Exception('Failed to find the uncompliled device tree file '+dtsFileDir)
             self.fileDirectories.remove(dtsFileDir)
         
+        # Remove the to uncompiled u-boot script from the list
+        if not ubootscrFileDir == None:
+            self.__print(diagnosticOutput,'   Exclute the file "'+ubootscrFileDir+'" from the list')
+            if not ubootscrFileDir in self.fileDirectories:
+                    raise Exception('Failed to find the uncompiled u-boot script: '+ubootscrFileDir)
+            self.fileDirectories.remove(ubootscrFileDir)
+
         # Remove all uncompressed archive files form the list
         if not uncompressedFilesDir == None:
             for arch in uncompressedFilesDir:
@@ -383,8 +419,13 @@ class Partition:
             raise Exception('Error: Import files before running the'+\
                             ' method "calculatePartitionFilesize()"!')
 
-        if self.fileDirectories == None:
-            self.__print(diagnosticOutput,'Warning: The partition '+str(self.id)+' has no files to import')
+        if self.fileDirectories == None or self.fileDirectories ==[]:
+            if not self.type_hex=='a2':
+                raise Exception(' The partition '+str(self.id)+' has no files to import!\n'+ \
+                                ' This is not allowed! Please delate the partition from the table\n'+\
+                                ' or import some files!')
+            else:
+                self.__print(diagnosticOutput,'Warning: The partition '+str(self.id)+' has no files to import')
             return
 
         self.__print(diagnosticOutput,'--> Calculate the entire size of partition no.'+str(self.id))
@@ -571,6 +612,86 @@ class Partition:
 
         # Return the uncompiled file directory 
         return dts_file_dir
+
+       # 
+    #
+    #
+    # @brief Compile the u-boot script file "boot.script"
+    # @param diagnosticOutput       Enable/Disable the console printout
+    # @param searchPath             Directory to search
+    # @return                       File path of the compiled device tree file
+    #  
+    def __compileubootscript(self,diagnosticOutput=True,searchPath =None):
+        
+        singleFile = len(os.listdir(searchPath)) == 0
+        self.__print(diagnosticOutput,'--> Compile the u-boot script "boot.script"')
+        if not singleFile:
+            self.__print(diagnosticOutput,'    Looking for the "boot.script" file '+ \
+                'in the top folder')
+
+        ubootscr_file_dir = None 
+        ubootscript_file_dir = None
+        uboot_file_found = False
+
+        if singleFile:
+            pos = searchPath.find('boot.script')
+            if pos ==-1:
+                self.__print(diagnosticOutput,'NOTE: No "boot.script" was found '+ \
+                'in the partition '+str(self.id))
+            else:
+                ubootscript_file_dir = searchPath
+                ubootscr_file_dir = searchPath[:pos]+'boot.script'
+                
+        else:
+            # Look for the "boot.script" file in the top folder
+            for file in os.listdir(searchPath):
+                if os.path.isfile(searchPath+'/'+file):
+                    if file == 'boot.script':
+                        if uboot_file_found:
+                            raise Exception('More than one "boot.script" file found!\n'+\
+                                            'Only one is allowed!')
+                        self.__print(diagnosticOutput,'DTS File: '+file)
+                        ubootscr_file_dir = searchPath+'/boot.scr'
+                        ubootscript_file_dir = searchPath+'/'+file
+                        uboot_file_found = True
+
+        # Check if the "boot.script" is found
+        if ubootscript_file_dir == None:
+            self.__print(diagnosticOutput,'NOTE: No "boot.script" file '+\
+                        'is found in the top folder!')
+            return None
+
+        if not singleFile:
+            # Check that the output file is not already available
+            for file in os.listdir(searchPath):
+                if os.path.isfile(searchPath+'/'+file):
+                    if file == 'boot.scr':
+                        self.__print(diagnosticOutput,'Remove the old complied u-boot'+ \
+                                ' script file: "'+file+'"')
+                        try:
+                            os.remove(searchPath+'/'+file)
+                        except Exception:
+                            raise Exception('Failed to delete the old complied u-boot script')
+
+        comand = 'mkimage -A '+self.comp_ubootscript+' -O linux -T script -C none -a 0 -e 0'+ \
+                 ' -n u-boot -d '+ubootscript_file_dir+' '+ubootscr_file_dir
+ 
+        self.__print(diagnosticOutput,'--> Compile the u-boot script')
+        try:
+            os.system(comand)
+        except Exception as ex:
+            raise Exception('Failed to compile the u-boot script "boot.script"\n'+ \
+                            'Are the u-boot tools installed?')
+
+        time.sleep(DELAY_MS)
+
+        if not os.path.isfile(ubootscr_file_dir):
+            raise Exception('Failed to complie the u-boot script')
+    
+        self.__print(diagnosticOutput,'    = Done')
+
+        # Return the uncompiled file directory 
+        return ubootscript_file_dir
     
     # 
     #
@@ -1400,6 +1521,8 @@ class BootImageCreator:
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             p.wait()
             if p.returncode != 0:
+                self.__print(diagnosticOutput,'ERROR: Failed to create mounting point folder')
+                self.__print(diagnosticOutput,'Partition type: '+str(partition.type))
                 self.__unmountDeleteLoopbacks(diagnosticOutput)
                 raise Exception('Failed to mount the filesystem')
             self.__mounted_fs.append(mounting_point)
@@ -1453,7 +1576,7 @@ class BootImageCreator:
 #
 default_blueprint_xml_file ='<?xml version="1.0" encoding = "UTF-8" ?>\n'+\
     '<!-- Linux Distribution Blueprint XML file -->\n'+\
-    '<!-- Used by the Python script "LinuxDistro2Image.py -->\n'+\
+    '<!-- Used by the Python script "LinuxDistro2Image.py" -->\n'+\
     '<!-- to create a custom Linux boot image file -->\n'+\
     '<!-- Description: -->\n'+\
     '<!-- item "partition" describes a partition on the final image file-->\n'+\
@@ -1468,10 +1591,14 @@ default_blueprint_xml_file ='<?xml version="1.0" encoding = "UTF-8" ?>\n'+\
     '<!-- 	L 	    => Yes: Y or No: N -->\n'+\
     '<!-- L "unzip"     => Unzip a compressed file if available (Top folder only) -->\n'+\
     '<!-- 	L 	    => Yes: Y or No: N -->\n'+\
+    '<!-- L "ubootscript"  => Compile the u-boot script file ("boot.script") -->\n'+\
+    '<!-- 	L 	    => Yes, for the ARMv7A (32-bit) architecture ="arm" -->\n'+\
+    '<!-- 	L 	    => Yes, for the ARMv8A (64-bit) architecture ="arm64" -->\n'+\
+    '<!-- 	L 	    => No ="" -->\n'+\
     '<LinuxDistroBlueprint>\n'+\
-    '<partition id="1" type="vfat" size="*" offset="500M" devicetree="Y" unzip="N" />\n'+\
-    '<partition id="2" type="ext3" size="*" offset="1M" devicetree="N" unzip="Y" />\n'+\
-    '<partition id="3" type="RAW" size="*" offset="20M"  devicetree="N" unzip="N" />\n'+\
+    '<partition id="1" type="vfat" size="*" offset="500M" devicetree="Y" unzip="N" ubootscript="arm" />\n'+\
+    '<partition id="2" type="ext3" size="*" offset="1M" devicetree="N" unzip="Y" ubootscript="" />\n'+\
+    '<partition id="3" type="RAW" size="*" offset="20M"  devicetree="N" unzip="N" ubootscript="" />\n'+\
     '</LinuxDistroBlueprint>\n'
 
 
@@ -1551,6 +1678,7 @@ if __name__ == '__main__':
             offset = str(part.get('offset'))
             devicetree = str(part.get('devicetree'))
             unzip_str = str(part.get('unzip'))
+            comp_ubootscr = str(part.get('ubootscript'))
         except Exception as ex:
             print(' ERROR: XML File decoding failed!')
             print(' Msg.: '+str(ex))
@@ -1565,7 +1693,7 @@ if __name__ == '__main__':
             unzip = True
 
         try:
-            partitionList.append(Partition(True,id,type,size,offset,comp_devicetree,unzip))
+            partitionList.append(Partition(True,id,type,size,offset,comp_devicetree,unzip,comp_ubootscr))
         except Exception as ex:
             print(' ERROR: Partition data import failed!')
             print(' Msg.: '+str(ex))

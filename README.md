@@ -31,6 +31,7 @@ ___
 * **Dynamic mode: Partition size = Size of the files to add to the partition**
 * **An offset can be added to a dynamic size (*e.g. for user space on the running Linux*)**
 * **Linux device tree (*dts*) -files inside a partition can be automatically compiled and replaced with the uncompiled file**  
+* **A u-boot script with the name "*boot.script*" inside a partition can be automatically compiled and replaced with the uncompiled file**
 * **Compressed files *(e.g. "tar.gz")* containing for instance the Linux *rootfs* can be unzip and automatically added to the partition**
 * **Image Sizes, Block Sizes, Start Sectors for every partition will be automatically generated for the depending configuration**
 * **The final image file can be compressed to a "*zip*-archive file to reduce the image size**
@@ -66,7 +67,7 @@ For generating a bootable image by executing a single Linux command please follo
     * To install "*git*"
         * Ubuntu
             ````shell
-            sudo apt-get install git 
+            sudo apt-get install -y git 
             ````
         * CentOS
             ````shell
@@ -75,11 +76,20 @@ For generating a bootable image by executing a single Linux command please follo
 * For compiling Linux Device tree files install the device tree compiler
     * Ubuntu
         ````shell
-        sudo apt-get install device-tree-compiler
+        sudo apt-get install -y device-tree-compiler
         ````
     * CentOS
         ````shell
         sudo yum install dtc
+        ````
+* For compiling u-boot script install the *u-boot tools*
+    * Ubuntu
+        ````shell
+        sudo apt-get install -y u-boot-tools
+        ````
+    * CentOS
+        ````shell
+        sudo yum install uboot-tools
         ````
 * Navigate into the repository folder
     ````shell 
@@ -102,10 +112,10 @@ For generating a bootable image by executing a single Linux command please follo
     ````xml
     <?xml version="1.0" encoding = "UTF-8" ?>
     <!-- Linux Distribution Blueprint XML file -->
-    <!-- Used by the Python script "LinuxDistro2Image.py -->
+    <!-- Used by the Python script "LinuxDistro2Image.py" -->
     <!-- to create a custom Linux boot image file -->
     <!-- Description: -->
-    <!-- item "partition" Describes a partition on the final image file-->
+    <!-- item "partition" describes a partition on the final image file-->
     <!-- L "id"        => Partition number on the final image (1 is the lowest number) -->
     <!-- L "type"      => Filesystem type of partition  -->
     <!--   L       => ext[2-4], Linux, xfs, vfat, fat, none, raw, swap -->
@@ -117,10 +127,14 @@ For generating a bootable image by executing a single Linux command please follo
     <!-- 	L 	    => Yes: Y or No: N -->
     <!-- L "unzip"     => Unzip a compressed file if available (Top folder only) -->
     <!-- 	L 	    => Yes: Y or No: N -->
+    <!-- L "ubootscript"  => Compile the u-boot script file ("uboot.script") -->
+    <!-- 	L 	    => Yes, for the ARMv7A (32-bit) architecture ="arm" -->
+    <!-- 	L 	    => Yes, for the ARMv8A (64-bit) architecture ="arm64" -->
+    <!-- 	L 	    => No ="" -->
     <LinuxDistroBlueprint>
-    <partition id="1" type="vfat" size="*" offset="1M" devicetree="Y" unzip="N" />
-    <partition id="2" type="ext3" size="*" offset="500M" devicetree="N" unzip="Y" />
-    <partition id="3" type="RAW" size="*" offset="20M"  devicetree="N" unzip="N" />
+    <partition id="1" type="vfat" size="*" offset="500M" devicetree="Y" unzip="N" ubootscript="arm" />
+    <partition id="2" type="ext3" size="*" offset="1M" devicetree="N" unzip="Y" ubootscript="" />
+    <partition id="3" type="RAW" size="*" offset="20M"  devicetree="N" unzip="N" ubootscript="" />
     </LinuxDistroBlueprint>
     ````
     **Customize the XML file for your Linux distribution and platform.**
@@ -174,10 +188,12 @@ The following steps describes in the right sequence the required Python methods 
     # @param offset_str        In case a dynamic size is used the offset value is added to file size
     # @param devicetree        Compile the Linux Device (.dts) inside the partition if available 
     # @param unzip             Unzip a compressed file if available
+    # @param ubootscript       Compile the u-boot script "boot.script" for architecture "arm" or "arm64"
     # @param operation_mode    File scan mode: 1= List every file | 0= List only top files and folders
     #  
     def __init__(self,diagnosticOutput=True, id=None, type=None,size_str=None,
-                    offset_str=None,devicetree=False,unzip=False, operation_mode=0):
+                    offset_str=None,devicetree=False,unzip=False,,ubootscript=None,
+                 operation_mode=0):
     ````
 
 2. **Add folders/files to the partitions**
