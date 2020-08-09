@@ -127,7 +127,7 @@ For generating a bootable image by executing a single Linux command please follo
     <!-- 	L 	    => Yes: Y or No: N -->
     <!-- L "unzip"     => Unzip a compressed file if available (Top folder only) -->
     <!-- 	L 	    => Yes: Y or No: N -->
-    <!-- L "ubootscript"  => Compile the u-boot script file ("uboot.script") -->
+    <!-- L "ubootscript"  => Compile the u-boot script file ("boot.script") -->
     <!-- 	L 	    => Yes, for the ARMv7A (32-bit) architecture ="arm" -->
     <!-- 	L 	    => Yes, for the ARMv8A (64-bit) architecture ="arm64" -->
     <!-- 	L 	    => No ="" -->
