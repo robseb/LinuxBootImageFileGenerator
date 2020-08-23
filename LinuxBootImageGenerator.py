@@ -72,30 +72,33 @@ DELAY_MS = 3 # Delay after critical tasks in milliseconds
 # @brief Class for discripting a filesystem partition 
 #   
 class Partition:
-    scan_mode: int          # File scan mode: 1= List every file | 0= List only top files and folders
-    id:   int               # Number of Partition (O is the lowest)
-    type: str               # Partition Filesystem 
-    type_hex: str           # Partition Filesystem as HEX value for "fdisk"
-    type_mkfs: str          # Partition Filesystem as MKFS value for "mkfs."
-    size_str: str           # Partition size as string with unit (KB,MB)
-    size : int              # Partition size in Byte (0 => dynamic file size)
-    offset_str: str         # Partition offset space  as string to a dynamic size 
-    offset: int             # Partition offset space as byte to a dynamic size 
-    fileDirectories =[]     # File directory of each file to be imported to the partition
-    totalFileSize: int      # Total file size of the partition (Byte)
-    totalFileSizeStr: str   # Total file size of the partition (string 1GB,1MB)
+    scan_mode: int            # File scan mode: 1= List every file | 0= List only top files and folders
+    id:   int                 # Number of Partition (O is the lowest)
+    type: str                 # Partition Filesystem 
+    type_hex: str             # Partition Filesystem as HEX value for "fdisk"
+    type_mkfs: str            # Partition Filesystem as MKFS value for "mkfs."
+    size_str: str             # Partition size as string with unit (KB,MB)
+    size : int                # Partition size in Byte (0 => dynamic file size)
+    offset_str: str           # Partition offset space  as string to a dynamic size 
+    offset: int               # Partition offset space as byte to a dynamic size 
+    fileDirectories =[]       # File directory of each file to be imported to the partition
+    totalFileSize: int        # Total file size of the partition (Byte)
+    totalFileSizeStr: str     # Total file size of the partition (string 1GB,1MB)
 
-    totalSize:  str         # Total size of the partition (Byte)
-    totalSizeStr:  str      # Total size of the partition (string 1GB, 1MB)
+    totalSize:  str           # Total size of the partition (Byte)
+    totalSizeStr:  str        # Total size of the partition (string 1GB, 1MB)
     
-    comp_devicetree: bool   # Compile a Linux dts devicetree file if available
-    comp_ubootscript: str   # Compile u-boot script "boot.script" for architecture "arm" or "arm64"
-    unzip_file: bool        # unzip a compressed file if available 
-    startSector: int        # Partition Start sector 
-    BlockSectorSize: int    # Block size of the partition
+    comp_devicetree: bool     # Compile a Linux dts devicetree file if available
+    comp_ubootscript: str     # Compile u-boot script "boot.script" for architecture "arm" or "arm64"
+    unzip_file: bool          # unzip a compressed file if available 
+    startSector: int          # Partition Start sector 
+    BlockSectorSize: int      # Block size of the partition
 
-    __filesImported:bool    # Indicates that files are imported to the list 
-    __unzipedFiles =[]      # List of all unziped files/folder to remove in the deconstructor  
+    __filesImported:bool      # Indicates that files are imported to the list 
+    __unzipedFiles =[]        # List of all unziped files/folder to remove in the deconstructor  
+    __dtsFileDir: str         # Direcortry of the DTS file to remove from the partition
+    __ubootscrFileDir: str    # Direcortry of the u-boot script file to remove from the partition
+    __uncompressedFilesDir =[]# Direcortries of the uncompressed archive files
 
     #  
     # 
@@ -179,6 +182,9 @@ class Partition:
         self.comp_ubootscript = ubootscript
 
         self.totalSize = None
+        self.__dtsFileDir = None
+        self.__ubootscrFileDir=None
+        self.__uncompressedFilesDir=[]
 
     #
     #
@@ -265,10 +271,15 @@ class Partition:
     #
     # @brief Find files in a directory and add them to the file list
     #        These files will then be added to the partition 
+    #        Archive files will be unziped, devicetree files and u-boot
+    #        scripts will be complied and the output will be added to the partition
     # @param diagnosticOutput       Enable/Disable the console printout
     # @param searchPath             Directory to search
+    # @param compileDevTreeUboot    Do complie the devicetree and a u-boot script
+    # @param unzipArchive           Do unzip archvie files (such as the rootfs) 
     #
-    def findFileDirectories(self,diagnosticOutput=True,searchPath = None):
+    def findFileDirectories(self,diagnosticOutput=True,searchPath = None, \
+                            compileDevTreeUboot = True, unzipArchive=True):
         self.__print(diagnosticOutput,'--> Scan path "'+str(searchPath)+'" to find a files inside it')
         
         if len(os.listdir(searchPath)) == 0:
@@ -277,20 +288,18 @@ class Partition:
             return
 
         # Compile the Linux Device Tree if necessary 
-        dtsFileDir = None 
-        if self.comp_devicetree == True:
-            dtsFileDir = self.__compileDeviceTree(diagnosticOutput,searchPath)
+        if compileDevTreeUboot:
+            if self.comp_devicetree == True:
+                self.__dtsFileDir = self.__compileDeviceTree(diagnosticOutput,searchPath)
 
-         # Compile the u-boot script 
-        ubootscrFileDir = None 
-        if self.comp_ubootscript == "arm" or self.comp_devicetree == "arm64":
-            ubootscrFileDir = self.__compileubootscript(diagnosticOutput,searchPath)
+            # Compile the u-boot script 
+            if self.comp_ubootscript == "arm" or self.comp_devicetree == "arm64":
+                self.__ubootscrFileDir = self.__compileubootscript(diagnosticOutput,searchPath)
 
-
-        # Uncompress archive files if necessary
-        uncompressedFilesDir =[]
-        if self.unzip_file == True:
-            uncompressedFilesDir = self.__uncompressArchivefiles(diagnosticOutput,searchPath)
+        if unzipArchive:
+            # Uncompress archive files if necessary
+            if self.unzip_file == True:
+                self.__uncompressedFilesDir = self.__uncompressArchivefiles(diagnosticOutput,searchPath)
 
         fileDirectories = []
         # Scan operating mode: Scan Mode 0 -> Scan only the top folder 
@@ -359,23 +368,29 @@ class Partition:
         # Avoid issues by removing all doubled files from the list
         self.fileDirectories =  list(set(fileDirectories))
 
+
         # Remove the uncompiled Linux device tree file from the list
-        if not dtsFileDir == None:
-            self.__print(diagnosticOutput,'   Exclute the file "'+dtsFileDir+'" from the list')
-            if not dtsFileDir in self.fileDirectories:
-                    raise Exception('Failed to find the uncompliled device tree file '+dtsFileDir)
-            self.fileDirectories.remove(dtsFileDir)
+        if not self.__dtsFileDir == None:
+            self.__print(diagnosticOutput,'   Exclute the file "'+\
+                self.__dtsFileDir+'" from the list')
+            if not self.__dtsFileDir in self.fileDirectories:
+                    raise Exception('Failed to find the uncompliled device tree file '+\
+                        self.__dtsFileDir)
+            self.fileDirectories.remove(self.__dtsFileDir)
         
         # Remove the to uncompiled u-boot script from the list
-        if not ubootscrFileDir == None:
-            self.__print(diagnosticOutput,'   Exclute the file "'+ubootscrFileDir+'" from the list')
-            if not ubootscrFileDir in self.fileDirectories:
-                    raise Exception('Failed to find the uncompiled u-boot script: '+ubootscrFileDir)
-            self.fileDirectories.remove(ubootscrFileDir)
+        if not self.__ubootscrFileDir == None:
+            self.__print(diagnosticOutput,'   Exclute the file "'+\
+                self.__ubootscrFileDir+'" from the list')
+            if not self.__ubootscrFileDir in self.fileDirectories:
+                    raise Exception('Failed to find the uncompiled u-boot script: '+\
+                        self.__ubootscrFileDir)
+            self.fileDirectories.remove(self.__ubootscrFileDir)
 
         # Remove all uncompressed archive files form the list
-        if not uncompressedFilesDir == None:
-            for arch in uncompressedFilesDir:
+    
+        if not self.__uncompressedFilesDir == None:
+            for arch in self.__uncompressedFilesDir:
                 self.__print(diagnosticOutput,'   Exclute the archive file "'+arch+'" from the list')
                 if not arch in self.fileDirectories:
                     raise Exception('Failed to find the unzip file '+arch)
