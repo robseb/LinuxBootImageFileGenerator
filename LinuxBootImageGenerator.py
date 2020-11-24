@@ -41,8 +41,11 @@
 #
 # (2020-08-09) Vers. 1.05
 #  adding u-boot script compilation feature 
+#
+# (2020-11-24) Vers. 1.06
+#  Detection of wrong Device Tree compilation
 
-version = "1.05"
+version = "1.06"
 
 import os
 import sys
@@ -292,9 +295,15 @@ class Partition:
             if self.comp_devicetree == True:
                 self.__dtsFileDir = self.__compileDeviceTree(diagnosticOutput,searchPath)
 
+            if self.__dtsFileDir==None:
+                raise Exception('Device Tree complation Failed! Please check this file!')
+
             # Compile the u-boot script 
             if self.comp_ubootscript == "arm" or self.comp_devicetree == "arm64":
                 self.__ubootscrFileDir = self.__compileubootscript(diagnosticOutput,searchPath)
+
+            if self.__ubootscrFileDir==None:
+                raise Exception('U-boot script complation Failed! Please check this file!')
 
         if unzipArchive:
             # Uncompress archive files if necessary
@@ -620,6 +629,12 @@ class Partition:
                             'Is the Linux Device compiler "dtc" installed?')
 
         time.sleep(DELAY_MS)
+
+        # Check that the Device Tree File exist!
+        if not os.path.isfile(searchPath+'/'+outputfile):
+            self.__print(diagnosticOutput,'ERROR: Compilation of the Linux Device Tree failed!')
+            return None
+
 
         self.__print(diagnosticOutput,'--> Compilation of the Linux Device Tree file "'+\
                                     dts_file_name+'" done')
