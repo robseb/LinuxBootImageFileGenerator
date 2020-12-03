@@ -44,8 +44,11 @@
 #
 # (2020-11-24) Vers. 1.06
 #  Detection of wrong Device Tree compilation
+#
+# (2020-12-03) Vers. 1.07
+#  Bug fix for wrong file/build detection
 
-version = "1.06"
+version = "1.07"
 
 import os
 import sys
@@ -294,16 +297,14 @@ class Partition:
         if compileDevTreeUboot:
             if self.comp_devicetree == True:
                 self.__dtsFileDir = self.__compileDeviceTree(diagnosticOutput,searchPath)
-
-            if self.__dtsFileDir==None:
-                raise Exception('Device Tree complation Failed! Please check this file!')
+                if self.__dtsFileDir==None:
+                    raise Exception('Device Tree complation Failed! Please check this file!')
 
             # Compile the u-boot script 
             if self.comp_ubootscript == "arm" or self.comp_devicetree == "arm64":
                 self.__ubootscrFileDir = self.__compileubootscript(diagnosticOutput,searchPath)
-
-            if self.__ubootscrFileDir==None:
-                raise Exception('U-boot script complation Failed! Please check this file!')
+                if self.__ubootscrFileDir==None:
+                    raise Exception('U-boot script complation Failed! Please check this file!')
 
         if unzipArchive:
             # Uncompress archive files if necessary
