@@ -726,7 +726,7 @@ ___
 
 * *rsyocto*; **Robin Sebastian,M.Sc. [(LinkedIn)](https://www.linkedin.com/in/robin-sebastian-a5080220a)**
 
-*Pip2BitBake* and *rsyocto* are self-developed projects in which no other companies are involved. 
+*LinuxBootImageFileGenerator* and *rsyocto* are self-developed projects in which no other companies are involved. 
 It is specifically designed to serve students and the Linux/FPGA open-source community with its publication on GitHub and its open-source MIT license. 
 In the future, *rsyocto* will retain its open-source status and it will be further developed. 
 
