@@ -606,7 +606,7 @@ class Partition:
                         '.dts file is found in the top folder!')
             return None
 
-        outputfile = dts_file_name[:suffix_pos-3]+'.dtb'
+        outputfile = dts_file_name[:-4] + '.dtb'
         if not singleFile:
             # Check that the output file is not already available
             for file in os.listdir(searchPath):
