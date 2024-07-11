@@ -47,8 +47,11 @@
 #
 # (2020-12-03) Vers. 1.07
 #  Bug fix for wrong file/build detection
-
-version = "1.07"
+#
+# (2024-07-11) Vers. 1.08
+#  Fixing loopback device mounting issue with the new Linux Kernel
+#
+version = "1.08"
 
 import os
 import sys
@@ -1399,8 +1402,6 @@ class BootImageCreator:
             part.updateSectores(start_sector,block_size) 
             self.__print(diagnosticOutput,'   Pat.:'+str(part.id)+
                     ' Start: '+str(start_sector)+' Block size: '+str(block_size))
-
-    #  
     #
     #
     # @brief Format a partition with a filesystem and a open loopback
@@ -1415,15 +1416,20 @@ class BootImageCreator:
         
         # Execute the Linux "mkfs." command 
         self.__print(diagnosticOutput,'   Execute Linux command '+str(type_mkfs))
-
+        cmd =""
         if(type_mkfs in "mkfs.vfat"):
-            # Ubuntu requirers for mkfs.vfat -I
-            process = subprocess.Popen(["sudo", type_mkfs, self.__usedLoopback ,'-F 32','-I'],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            os.system('sudo mkfs.vfat -M 0xF8 -F 32 '+self.__usedLoopback)
+            #print(["sudo", type_mkfs, self.__usedLoopback ,'-M F8','-F 32'])
+            #sys.exit()
+            
         else:
             #os.system('sudo '+type_mkfs+' '+self.__usedLoopback)
+            cmd = "sudo", type_mkfs, self.__usedLoopback
             process = subprocess.Popen(["sudo", type_mkfs, self.__usedLoopback ],
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)     
+            process.wait()
+            
         '''
         time.sleep(DELAY_MS)
         if("mkfs.ext3" in type_mkfs):
@@ -1431,15 +1437,16 @@ class BootImageCreator:
             b = str('y\n').encode('utf-8')
             process.stdin.write(b)     
         '''    
-        time.sleep(DELAY_MS)
 
         # Read if a error occurs 
-        process.wait()
-        if process.returncode !=0: 
-            self.__unmountDeleteLoopbacks(diagnosticOutput)
-            raise Exception('Formating with '+str(TypeError)+' failed')
+        #p
+        #if process.returncode !=0: 
+        #    self.__unmountDeleteLoopbacks(diagnosticOutput)
+        #    print(cmd +" Faield with: "+'Formating with '+str(process.returncode)+' failed ==> try to run first "sudo partprobe"')
+        #    raise Exception('Formating with '+str(process.returncode)+' failed ==> try to run first "sudo partprobe"')
 
         self.__print(diagnosticOutput,'   Execution is done')
+     
      
     # 
     #
