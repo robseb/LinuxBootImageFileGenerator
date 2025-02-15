@@ -24,7 +24,7 @@ ___
 # Features
 
 * **Boot image *(.img)* file generation for distributing embedded Linux Distributions**
-* **Up to 4 freely configurable partitions**
+* **Extended partition table with more then 4 parttitions**
 * **Configurable partition size in *Byte*,*Kilobyte*,*Megabyte* or *Gigabyte***
 * **File structure for each partition will be generated and user files can be added**
 * **Partition file size check** 
@@ -49,9 +49,14 @@ ___
     * *.tar* **-Archives**
     * *.tar.gz* **-Archives**
     * *.zip* **-Archives**
+* **Extended partition support**
+    * Incase of more then 4 partitions the script will generate a extended partition table
+    * Then, partition 4 will be the extendend partition and the other partitions will be logical partitions inside the extended partition
 * **Tested Development Environments**
     * **Ubuntu 18.04 LTS**
     * **Ubuntu 20.04 LTS**
+    * **Ubuntu 22.04 LTS**
+    * **Ubuntu 24.04 LTS**
     * **CentOS 7.7**
     * **CentOS 8.0**
 
