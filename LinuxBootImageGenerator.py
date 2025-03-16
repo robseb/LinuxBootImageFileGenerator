@@ -57,7 +57,10 @@
 #  Performance improvements and bug fixes
 #  Extended partition support
 #  
-version = "1.10"
+# (2025-03-15) Vers. 1.11
+#  EX2/EXT3 partition size check for extended partitions
+#
+version = "1.11"
 
 import os
 import sys
@@ -275,7 +278,6 @@ class Partition:
         else:
             self.offset = 0
             self.offset_str ='0'
-            self.__print(diagnosticOutput,'NOTE: The offset value will be ignored!')
 
         # Should a dts Linux devicetree file be compiled?
         self.comp_devicetree = devicetree
@@ -585,6 +587,7 @@ class Partition:
             * *Error: Import files before running the method "calculatePartitionFilesize()"!*
             * *The partition has no files to import!*
             * *The partition No. has no size!*
+            * *The EXT2/EXT4 partition No. requires at least 6 MB!*
             * *Error: NOT ENOUGH DISK SPACE CONFIGURED ON PARTITION No. X The chosen size of is to small to fit all files*
         """
 
@@ -621,7 +624,8 @@ class Partition:
                     # Calculate the size of a folder
                     dir = Path(file)
                     self.totalFileSize += sum(f.stat().st_size for f in dir.glob('**/*') if f.is_file())
-        
+
+
         # Check that the files fit in the partition
         if self.size != 0: 
             if self.totalFileSize > self.size:
@@ -637,6 +641,13 @@ class Partition:
 
         if self.totalSize == 0:
             raise Exception('The partition No.'+str(self.id)+' has no size!')
+
+                
+        # EXT3 and EXT2 require a minimum size of 12MB
+        if (self.type_mkfs == 'mkfs.ext3' or self.type_mkfs == 'mkfs.ext2')  and self.totalSize < 12*1024*1024:
+            self.__print(diagnosticOutput,'ERROR: The EXT2/EXT4 partition No.'+str(self.id)+' requires at least 12 MB \n'+\
+            'of total size. The current size is '+self.__convert_byte2str(self.totalSize)+' ('+str(self.totalSize)+'B). Extened the size offset!')
+            raise Exception('The EXT2/EXT4 partition No.'+str(self.id)+' requires at least 12 MB!')
         
         # Convert byte size to string (1MB, 1GB,...)
         self.totalFileSizeStr = self.__convert_byte2str(self.totalFileSize)
@@ -1143,13 +1154,13 @@ class BootImageCreator:
         for part in self.partitionTable:
             self.totalImageSize = self.totalImageSize + part.totalSize 
 
-        # Increase the image size by 10MB to avoid issues
+        # Increase the image size by 20MB to avoid issues
         # or increase the size by 2 times if the size is smaller than 1MB
         ######################################################################################
         if self.totalImageSize < 1_000_000:
             self.totalImageSize = self.totalImageSize+self.totalImageSize*2
         else:
-            self.totalImageSize = self.totalImageSize+10_000_000
+            self.totalImageSize = self.totalImageSize+20_000_000
         #elif self.totalImageSize < 30_000_000:
         #    self.totalImageSize = self.totalImageSize+self.totalImageSize*0.5
         #elif self.totalImageSize < 60_000_000:
@@ -1247,7 +1258,7 @@ class BootImageCreator:
         self.__createLoopbackDevice(diagnosticOutput,self.totalImageSize)
 
         # Step 4: Create the partition table with "fdisk"
-        self.__createPartitonTable(diagnosticOutput, True)
+        self.__createPartitonTable(diagnosticOutput, False)
 
         # Step 5: Clear and unmount the used loopback device
         #self.__delete_loopback(diagnosticOutput,self.__usedLoopback)
@@ -2049,6 +2060,10 @@ class BootImageCreator:
             if p.returncode != 0:
                 self.__print(diagnosticOutput,'ERROR: Failed to create mounting point folder')
                 self.__print(diagnosticOutput,'Partition type: '+str(partition.type))
+
+                print("sudo mount -t "+str(partition.type)+' '+loopdevice+' '+mounting_point)
+                wait = input("Type someting to conitinue ....")
+
                 self.__unmountDeleteLoopbacks(diagnosticOutput)
                 raise Exception('Failed to mount the filesystem')
             self.__mounted_fs.append(mounting_point)
